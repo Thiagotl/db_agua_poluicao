@@ -1,0 +1,38 @@
+---
+title: "Contaminação da Água"
+author:
+  - Renata Rojas Guerra
+  - Thiago Tavares Lopes
+date: "`r format(Sys.time(), '%d %B %Y')`"
+header-includes:
+   - \usepackage[brazil]{babel}
+   - \usepackage{bm}
+   - \usepackage{float}
+   - \usepackage{multirow}
+geometry: left=2.5cm, right=2.5cm, top=2cm, bottom=2cm
+toc: true #sumário
+output:
+  bookdown::pdf_document2:
+    fig.align: 'center'
+editor_options:
+  chunk_output_type: console
+  markdown: 
+    wrap: sentence
+--- 
+
+# Introdução
+
+```{r setup, include=FALSE}
+options(digits = 4)
+options(OutDec = ",")
+options(scipen = 1)
+
+#knitr::opts_chunk$set(echo=F, message=F, warning=F, fig.pos = 'H', 
+#                      fig.align = 'center', fig.width = 6.5, fig.height= 3.4) 
+
+```
+
+```{r, include=FALSE}
+library()
+```
+

@@ -10,3 +10,6 @@ colnames(quant_cnaes)[colnames(quant_cnaes)=='municipio_nome']<-'municipio'
 dados_combinados <- dados_sisagua_p7 |> 
   left_join(quant_cnaes, by='municipio')
 
+
+### 
+
