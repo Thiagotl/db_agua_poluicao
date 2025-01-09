@@ -59,7 +59,7 @@ query_completa <- sqlInterpolate(
 iestabelecimentos <- dbGetQuery(con, query_completa)
 
 # Criar uma tabela pivotada com municípios como linhas, CNAEs como colunas e soma das quantidades como valores
-pivot_data <- iestabelecimentos  |> 
+quant_cnaes <- iestabelecimentos  |> 
   select(municipio_nome, cnae_principal, cnae_secundario) %>%
   pivot_longer(
     cols = c(cnae_principal, cnae_secundario),
@@ -77,12 +77,14 @@ pivot_data <- iestabelecimentos  |>
 
 
 # # Criar um arquivo Excel
-# export_file_path <- "municipios_cnaes_formatado.xlsx"
-# write.xlsx(pivot_data, export_file_path, rowNames = FALSE)
+export_file_path <- "municipios_cnaes_formatado.csv"
+write.csv(quant_cnaes, export_file_path)
 # 
 # # Mostrar o caminho do arquivo gerado
 # cat("Arquivo exportado para:", export_file_path, "\n")
 # 
+
+ # IMPORTANTE
 # # Desconectar do banco de dados
 # dbDisconnect(con)
 
