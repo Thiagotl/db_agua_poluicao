@@ -1,6 +1,8 @@
 library(readr)
 
 
+
+
 dados_sisagua_p7 <- read_csv("planilha7_pivotresult_sisagua_25_out (1).csv") # planilha 8s
 #View(dados_sisagua_p7)
 
@@ -13,7 +15,14 @@ dados_combinados <- dados_sisagua_p7 |>
 attach(dados_combinados)
 
 
-#View(dados_combinados)
+
+
+# Paramentros - Acrilamida, Antimônio, Arsênio, Bário, Cádmio, Chumbo, Cromo, Cobre, Níquel, Nitrato (como N), Selênio
+
+
+
+
+View(dados_combinados)
 ### 
 
 
@@ -27,8 +36,10 @@ dados_combinados$`Porcentagem de Consistentes detectados Abaixo do VMP`<-dados_c
 dados_combinados$`Porcentagem de Consistentes detectados Acima do VMP`<-dados_combinados$`Porcentagem de Consistentes detectados Acima do VMP`/100
 
 
+
+
 contagem_cnaes_mun <- dados_combinados |> 
-  select(municipio, uf, parâmetro,`Porcentagem de Consistentes detectados Abaixo do VMP`, 
+  select(municipio, uf, parâmetro,`Porcentagem de Consistentes detectados Abaixo do VMP`,  # pegar a quantidade
          `Porcentagem de Consistentes detectados Acima do VMP`,
          "161001", "1071600", "1072402", "2022300", 
          "2029100", "2031200", "2072000", "2091600", "2093200", "729404", 
