@@ -22,7 +22,7 @@ teste2 <- teste |>
   left_join(quant_cnaes, by='municipio') |> 
   filter(quantidade > 0)
 
-
+dim(table(teste2$municipio))
 View(teste2)
 
 
