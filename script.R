@@ -125,50 +125,22 @@ print(result_secundarios)
 View(result_secundarios)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Garantir que todos os CNAEs estejam presentes
-# Criar um tibble com todos os CNAEs e combinar com os resultados
-all_cnaes <- tibble(cnae_codigo = cnae_list)
-
-# Combinar os CNAEs com os resultados
-result_full <- result_principais %>%
-  full_join(all_cnaes, by = "cnae_codigo") %>%
-  mutate(total_empresas = replace_na(total_empresas, 0))  # Preencher NA com 0
-
-# Pivotar os resultados para garantir que todos os CNAEs se tornem colunas
-result_pivot <- result_full %>%
-  pivot_wider(
-    names_from = cnae_codigo,  # Transformar os CNAEs em colunas
-    values_from = total_empresas,  # Usar as contagens como valores
-    values_fill = 0  # Preencher células vazias com 0
-  )
+# # Garantir que todos os CNAEs estejam presentes
+# # Criar um tibble com todos os CNAEs e combinar com os resultados
+# all_cnaes <- tibble(cnae_codigo = cnae_list)
+# 
+# # Combinar os CNAEs com os resultados
+# result_full <- result_principais %>%
+#   full_join(all_cnaes, by = "cnae_codigo") %>%
+#   mutate(total_empresas = replace_na(total_empresas, 0))  # Preencher NA com 0
+# 
+# # Pivotar os resultados para garantir que todos os CNAEs se tornem colunas
+# result_pivot <- result_full %>%
+#   pivot_wider(
+#     names_from = cnae_codigo,  # Transformar os CNAEs em colunas
+#     values_from = total_empresas,  # Usar as contagens como valores
+#     values_fill = 0  # Preencher células vazias com 0
+#   )
 
 # Visualizar os resultados pivotados
 print(result_pivot)
