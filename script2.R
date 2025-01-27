@@ -4,7 +4,7 @@ library(readr)
 
 
 dados_sisagua_p7 <- read_csv("planilha7_pivotresult_sisagua_25_out (1).csv") # planilha 8s
-#View(dados_sisagua_p7)
+View(dados_sisagua_p7)
 
 dim(table(dados_sisagua_p7$municipio))
 
