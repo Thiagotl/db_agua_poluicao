@@ -38,6 +38,8 @@ csv_path <- "Poluentes_Ref._Planilha_6 e 1_Samara_04-12-2024.csv"
 
 cnae_list <- load_csv_data(csv_path)
 
+dim(table())
+
 # Gerar a string de CNAEs formatada para a consulta SQL
 cnae_values <- paste0("'", cnae_list, "'", collapse = ",")
 
@@ -72,7 +74,7 @@ quant_cnaes <- iestabelecimentos  |>
     names_from = cnae,
     values_from = quantidade,
     values_fill = 0
-  )
+  ) 
 
 
 
