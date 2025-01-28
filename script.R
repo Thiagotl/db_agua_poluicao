@@ -46,28 +46,14 @@ print(cnae_values)
 
 typeof(cnae_values)
 
-# Construir e interpolar a consulta SQL
-query_completa <- sqlInterpolate(
-  con,
-  "SELECT e.*, c1.codigo AS cnae_principal, c2.codigo AS cnae_secundario, m.nome AS municipio_nome
-   FROM estabelecimentos e
-   INNER JOIN cnaes c1 ON e.cnae_fiscal_principal = c1.codigo
-   LEFT JOIN estabelecimento_cnaes_secundarios ecs ON e.id = ecs.estabelecimento_id
-   LEFT JOIN cnaes c2 ON ecs.cnae_id = c2.codigo
-   INNER JOIN municipios m ON e.municipio_id = m.codigo
-   WHERE c1.codigo IN (?) OR c2.codigo IN (?)",
-  DBI::SQL(cnae_values),
-  DBI::SQL(cnae_values)  # Passando a mesma lista formatada para os dois placeholders
-)
-
 # NOVA QUERY  
 # Executa a query no banco de dados
 # Construir a query apenas para CNAEs principais
 query_cnaes_principais <- glue_sql("
   SELECT 
       m.nome AS municipio_nome,
-      c.codigo AS cnae_codigo,
-      COUNT(e.id) AS total_empresas
+      c.codigo AS cnae_codigo_primario,
+      COUNT(e.id) AS total_empresas_primario
   FROM 
       municipios m
   LEFT JOIN 
@@ -98,8 +84,8 @@ dim(table(result_principais$cnae_codigo))
 query_cnaes_secundarios <- glue_sql("
   SELECT 
       m.nome AS municipio_nome,
-      c.codigo AS cnae_codigo,
-      COUNT(DISTINCT e.id) AS total_empresas
+      c.codigo AS cnae_codigo_secundario,
+      COUNT(DISTINCT e.id) AS total_empresas_secundario
   FROM 
       municipios m
   LEFT JOIN 
@@ -125,58 +111,26 @@ print(result_secundarios)
 View(result_secundarios)
 
 
-# # Garantir que todos os CNAEs estejam presentes
-# # Criar um tibble com todos os CNAEs e combinar com os resultados
-# all_cnaes <- tibble(cnae_codigo = cnae_list)
-# 
-# # Combinar os CNAEs com os resultados
-# result_full <- result_principais %>%
-#   full_join(all_cnaes, by = "cnae_codigo") %>%
-#   mutate(total_empresas = replace_na(total_empresas, 0))  # Preencher NA com 0
-# 
-# # Pivotar os resultados para garantir que todos os CNAEs se tornem colunas
-# result_pivot <- result_full %>%
-#   pivot_wider(
-#     names_from = cnae_codigo,  # Transformar os CNAEs em colunas
-#     values_from = total_empresas,  # Usar as contagens como valores
-#     values_fill = 0  # Preencher células vazias com 0
-#   )
 
-# Visualizar os resultados pivotados
-print(result_pivot)
+## data set com a junção dos cnaes primarios e secundarios
 
-# Visualizar o resultado pivotado
-print(result_pivot_principais)
 
-View(result_pivot_principais)
+resultado_final_cnae_ps<-result_principais |> 
+  left_join(result_secundarios, by = 'municipio_nome') |> 
+  group_by(municipio_nome, cnae_codigo_primario) |> 
+  summarise(
+    total_empresas_primario = sum(total_empresas_primario, na.rm = TRUE),
+    total_empresas_somado = total_empresas_primario + sum(total_empresas_secundario, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+
+
+
+
 # Opcional: Salvar o resultado em um arquivo CSV para análise
 write.csv(result_pivot_principais, "cnaes_principais_pivot.csv", row.names = FALSE)
 
-
-
-
-
-
-
-# Executar a consulta
-iestabelecimentos <- dbGetQuery(con, query_completa)
-
-View(iestabelecimentos)
-# Criar uma tabela pivotada com municípios como linhas, CNAEs como colunas e soma das quantidades como valores
-quant_cnaes <- iestabelecimentos  |> 
-  select(municipio_nome, cnae_principal, cnae_secundario)  |> 
-  pivot_longer(
-    cols = c(cnae_principal, cnae_secundario),
-    names_to = "tipo",
-    values_to = "cnae"
-  )  |> 
-  group_by(municipio_nome, cnae)  |> 
-  summarise(quantidade = n(), .groups = "drop")  |> 
-  pivot_wider(
-    names_from = cnae,
-    values_from = quantidade,
-    values_fill = 0
-  ) 
 
 View(quant_cnaes)
 
