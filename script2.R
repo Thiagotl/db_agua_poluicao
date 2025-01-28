@@ -30,7 +30,9 @@ View(result_principais_wide)
 
 dados_combinados <- dados_sisagua_p7_agrupados |> 
   left_join(result_principais_wide, by='municipio')
+
 attach(dados_combinados)
+
 View(dados_combinados)
 
 
