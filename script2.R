@@ -1,17 +1,38 @@
 library(readr)
 
 
-
-
 dados_sisagua_p7 <- read_csv("planilha7_pivotresult_sisagua_25_out.csv") # planilha 8s
 View(dados_sisagua_p7)
 
-dim(table(dados_sisagua_p7$municipio))
+dim(table(dados_sisagua_p7$município)) # sao 2782
+dim(table(result_principais$municipio_nome)) # 5246
 
 colnames(dados_sisagua_p7)[colnames(dados_sisagua_p7)=='município']<-'municipio'
-colnames(quant_cnaes)[colnames(quant_cnaes)=='municipio_nome']<-'municipio'
+colnames(result_principais)[colnames(result_principais)=='municipio_nome']<-'municipio'
 
-View(dados_sisagua_p7)
+# GRUPAR O DATASET DOS DADOS DO SISAGUA POR MUNICIPIO E SUBTANCIA
+dados_sisagua_p7_agrupados<-dados_sisagua_p7 |> 
+  group_by(municipio, parâmetro) |> 
+  summarise(contagem_parametro = n(), .groups = "drop")
+
+view(dados_sisagua_p7_agrupados)
+# TRANSFORMAR PARA FORMATO WIDER (FORMATO LONGO)
+
+result_principais_wide <- result_principais |> pivot_wider(
+  names_from = cnae_codigo_primario,
+  values_from = total_empresas_primario,
+  #values_fill = list(total_empresas_primario = 0)
+)
+
+View(result_principais_wide)
+
+# COMBINANDO AS DUAS TABELAS - SISAGUA E CNAE PRIMARIO
+
+dados_combinados <- dados_sisagua_p7_agrupados |> 
+  left_join(result_principais_wide, by='municipio')
+attach(dados_combinados)
+View(dados_combinados)
+
 
 ############## TESTES ###########
 teste<-dados_sisagua_p7 |> 
@@ -26,7 +47,7 @@ dim(table(teste2$municipio))
 View(teste2)
 
 
-#################################################
+### JUNTANDO OS BANCOS
 
 
 

@@ -116,7 +116,7 @@ View(result_secundarios)
 
 
 resultado_final_cnae_ps<-result_principais |> 
-  left_join(result_secundarios, by = 'municipio_nome') |> 
+  left_join(result_secundarios, by = 'municipio_nome', relationship = 'manny-to-many') |> 
   group_by(municipio_nome, cnae_codigo_primario) |> 
   summarise(
     total_empresas_primario = sum(total_empresas_primario, na.rm = TRUE),
