@@ -127,18 +127,10 @@ resultado_final_cnae_ps<-result_principais |>
 
 
 
-
 # Opcional: Salvar o resultado em um arquivo CSV para análise
 write.csv(result_pivot_principais, "cnaes_principais_pivot.csv", row.names = FALSE)
 
 
-View(quant_cnaes)
-
-# # Criar um arquivo Excel
-export_file_path <- "municipios_cnaes_formatado.csv"
-write.csv(quant_cnaes, export_file_path)
-
-# 
 # # Mostrar o caminho do arquivo gerado
 # cat("Arquivo exportado para:", export_file_path, "\n")
 # 
