@@ -10,7 +10,7 @@ dim(table(result_principais$municipio_nome)) # 5246
 colnames(dados_sisagua_p7)[colnames(dados_sisagua_p7)=='município']<-'municipio'
 colnames(result_principais)[colnames(result_principais)=='municipio_nome']<-'municipio'
 
-# GRUPAR O DATASET DOS DADOS DO SISAGUA POR MUNICIPIO E SUBTANCIA
+# GRUPAR O DATASET DOS DADOS DO SISAGUA POR MUNICIPIO E PARAMETRO
 dados_sisagua_p7_agrupados<-dados_sisagua_p7 |> 
   group_by(municipio, parâmetro) |> 
   summarise(contagem_parametro = n(), .groups = "drop")
