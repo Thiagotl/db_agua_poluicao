@@ -89,13 +89,14 @@ cor.test(tabela_nitrato$`Total de testes substâncias em geral para cada linha -
 
 plot(tabela_nitrato$`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,tabela_nitrato$`113000`)
 
-plot(tabela_nitrato$`151201`,tabela_nitrato$`Total de Consistentes detectados Acima do VMP`)
+cor.test(tabela_nitrato$`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,tabela_nitrato$`111302`)
 
+plot(tabela_nitrato$`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,tabela_nitrato$`111302`)
 
 plot(tabela_nitrato$`151201`,tabela_nitrato$x)
 
 ?cor.test
-t1<-cor(tabela_nitrato[,-c(1,2)])
+t1<-cor(tabela_nitrato[, -c(1:2)])
 
 View(t1)
 
