@@ -81,36 +81,43 @@ cnaes_nitrato <- c(
 
 tabela_nitrato <- dados_combinados |> 
   filter(parâmetro == "Nitrato (como N)") |> 
-  select(municipio,parâmetro,`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,
-         `Total de Consistentes detectados Acima do VMP`,all_of(cnaes_nitrato))
+  select(municipio,parâmetro,`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ` ,
+         `Total de inconsistentes`, `Total de Consistentes não detectados`, `Total de parâmetros com MENOR_LQ`,
+         `Total de Consistentes detectados Abaixo do VMP`,`Total de Consistentes detectados Acima do VMP`,Total_Detectados ,
+         all_of(cnaes_nitrato))
 
   
 
 View(tabela_nitrato)
 
-cor(tabela_nitrato[,-c(1,2)])
+colSums(is.na(tabela_nitrato))
+sum(is.na(tabela_nitrato))
+tabela_nitrato[is.na(tabela_nitrato)] <- 0
+
+tabela_nitrato<-as.data.frame(tabela_nitrato)
 
 
-cor.test(tabela_nitrato$`Total de Consistentes detectados Acima do VMP`,tabela_nitrato$`113000`)
-
-plot(tabela_nitrato$`Total de Consistentes detectados Acima do VMP`,tabela_nitrato$`113000`)
-
-cor.test(tabela_nitrato$`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,tabela_nitrato$`111302`)
-
-plot(tabela_nitrato$`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,tabela_nitrato$`111302`)
-
-plot(tabela_nitrato$`151201`,tabela_nitrato$x)
-
-?cor.test
-t1<-cor(tabela_nitrato[, -c(1:2)])
+t1<-cor(tabela_nitrato[, -c(1,2,15)])
 
 View(t1)
 
-apply(tabela_nitrato[,-c(1,2,4,5)],2,summary)
-### 
-(tabela_nitrato[-1,6])
+zero_sd_cols <- sapply(tabela_nitrato[, -c(1:2)], function(x) sd(x, na.rm = TRUE) == 0)
+zero_sd_cols  # Retorna TRUE para colunas com desvio padrão zero
+
+#tabela_filtrada <- tabela_nitrato[, -c(1:2)][, sapply(tabela_nitrato[, -c(1:2)], sd, na.rm = TRUE) > 0]
 
 
-typeof(tabela_nitrato)
-glimpse(tabela_nitrato)
 
+
+
+
+#### TESTE PARA MATRIZ DE CORRELAÇÃO
+
+
+cor_matrix <- cor(tabela_nitrato[,-c(1,2,15)], use = "pairwise.complete.obs")
+View(cor_matrix)
+library(heatmaply)
+
+# Criando um heatmap interativo
+heatmaply(cor_matrix, colors = colorRampPalette(c("blue", "white", "red"))(200), 
+          dendrogram = "row", k_row = 5, k_col = 5)
