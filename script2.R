@@ -105,6 +105,7 @@ cor.test(tabela_nitrato$`Total de Consistentes detectados Acima do VMP`, tabela_
 
 t2<-cor(tabela_nitrato$`Total de Consistentes detectados Abaixo do VMP`, tabela_nitrato[,-c(1,2)])
 
+plot(t2)
 View(t2)
 
 zero_sd_cols <- sapply(tabela_nitrato[, -c(1:2)], function(x) sd(x, na.rm = TRUE) == 0)
