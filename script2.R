@@ -1,13 +1,15 @@
 library(readr)
-
+# link importante - https://www.gov.br/receitafederal/dados/municipios.csv
 dados_sisagua_p7 <- read_csv("planilha7_pivotresult_sisagua_25_out.csv") # planilha 8s
 View(dados_sisagua_p7)
 
-dim(table(dados_sisagua_p7$município)) # sao 2782
-dim(table(result_principais$municipio_nome)) # 5246
-
 colnames(dados_sisagua_p7)[colnames(dados_sisagua_p7)=='município']<-'municipio'
 colnames(result_principais)[colnames(result_principais)=='municipio_nome']<-'municipio' # adicionar código ibge
+
+
+dim(table(dados_sisagua_p7$municipio)) # sao 2782
+dim(table(result_principais$municipio_nome)) # 5246
+
 
 # GRUPAR O DATASET DOS DADOS DO SISAGUA POR MUNICIPIO E PARAMETRO
 # dados_sisagua_p7_agrupados<-dados_sisagua_p7 |> 
@@ -23,7 +25,7 @@ dados_sisagua_p7_agrupados <- dados_sisagua_p7 |>
   mutate(Total_Detectados = `Total de Consistentes detectados Abaixo do VMP` + 
            `Total de Consistentes detectados Acima do VMP`) 
   
-  dados_sisagua_p7_agrupados<- dados_sisagua_p7_agrupados |> 
+dados_sisagua_p7_agrupados<- dados_sisagua_p7_agrupados |> 
     group_by(municipio, parâmetro) |> 
     summarise(across(where(is.numeric), sum, na.rm = TRUE), .groups = "drop")
 
@@ -79,15 +81,19 @@ cnaes_nitrato <- c(
 
 tabela_nitrato <- dados_combinados |> 
   filter(parâmetro == "Nitrato (como N)") |> 
-  select(municipio,parâmetro,`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`, all_of(cnaes_nitrato))
+  select(municipio,parâmetro,`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,
+         `Total de Consistentes detectados Acima do VMP`,all_of(cnaes_nitrato))
 
   
 
 View(tabela_nitrato)
 
-cor.test(tabela_nitrato$`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,tabela_nitrato$`113000`)
+cor(tabela_nitrato[,-c(1,2)])
 
-plot(tabela_nitrato$`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,tabela_nitrato$`113000`)
+
+cor.test(tabela_nitrato$`Total de Consistentes detectados Acima do VMP`,tabela_nitrato$`113000`)
+
+plot(tabela_nitrato$`Total de Consistentes detectados Acima do VMP`,tabela_nitrato$`113000`)
 
 cor.test(tabela_nitrato$`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,tabela_nitrato$`111302`)
 
@@ -105,6 +111,6 @@ apply(tabela_nitrato[,-c(1,2,4,5)],2,summary)
 (tabela_nitrato[-1,6])
 
 
-
-
+typeof(tabela_nitrato)
+glimpse(tabela_nitrato)
 
