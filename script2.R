@@ -97,9 +97,15 @@ tabela_nitrato[is.na(tabela_nitrato)] <- 0
 tabela_nitrato<-as.data.frame(tabela_nitrato)
 
 
-t1<-cor(tabela_nitrato[, -c(1,2,15)])
+t1<-cor(tabela_nitrato$`Total de Consistentes detectados Acima do VMP`, tabela_nitrato[,-c(1,2,)])
 
-View(t1)
+t1
+
+cor.test(tabela_nitrato$`Total de Consistentes detectados Acima do VMP`, tabela_nitrato$`111302`)
+
+t2<-cor(tabela_nitrato$`Total de Consistentes detectados Abaixo do VMP`, tabela_nitrato[,-c(1,2)])
+
+View(t2)
 
 zero_sd_cols <- sapply(tabela_nitrato[, -c(1:2)], function(x) sd(x, na.rm = TRUE) == 0)
 zero_sd_cols  # Retorna TRUE para colunas com desvio padrão zero
