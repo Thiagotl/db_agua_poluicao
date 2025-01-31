@@ -3,12 +3,11 @@ library(readr)
 dados_sisagua_p7 <- read_csv("planilha7_pivotresult_sisagua_25_out.csv") # planilha 8s
 View(dados_sisagua_p7)
 
-colnames(dados_sisagua_p7)[colnames(dados_sisagua_p7)=='município']<-'municipio'
-colnames(result_principais)[colnames(result_principais)=='municipio_nome']<-'municipio' # adicionar código ibge
+dim(table(dados_sisagua_p7$município)) # sao 2782
+dim(table(df_pivot$municipio)) # 5246
 
+colnames(dados_sisagua_p7)[colnames(dados_sisagua_p7)=="código_ibge"] <-'codigo_ibge'
 
-dim(table(dados_sisagua_p7$municipio)) # sao 2782
-dim(table(result_principais$municipio_nome)) # 5246
 
 
 # GRUPAR O DATASET DOS DADOS DO SISAGUA POR MUNICIPIO E PARAMETRO
@@ -19,43 +18,106 @@ dim(table(result_principais$municipio_nome)) # 5246
 # view(dados_sisagua_p7_agrupados)
 
 dados_sisagua_p7_agrupados <- dados_sisagua_p7 |>
-  select(municipio, parâmetro, uf, código_ibge, `Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,
+  select(município, parâmetro, uf, codigo_ibge, `Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,
          `Total de inconsistentes`, `Total de Consistentes não detectados`,`Total de parâmetros com MENOR_LQ`, `Total de Consistentes detectados Abaixo do VMP`,
          `Total de Consistentes detectados Acima do VMP`) |> 
   mutate(Total_Detectados = `Total de Consistentes detectados Abaixo do VMP` + 
            `Total de Consistentes detectados Acima do VMP`) 
   
 dados_sisagua_p7_agrupados<- dados_sisagua_p7_agrupados |> 
-    group_by(municipio, parâmetro) |> 
+    group_by(codigo_ibge, parâmetro, município) |> 
     summarise(across(where(is.numeric), sum, na.rm = TRUE), .groups = "drop")
 
-
+dim(table(dados_sisagua_p7_agrupados$município)) #2782
 
 view(dados_sisagua_p7_agrupados)
-
-# TRANSFORMAR PARA FORMATO WIDER (FORMATO LONGO)
-
-result_principais_wide <- result_principais |> pivot_wider(
-  names_from = cnae_codigo_primario,
-  values_from = total_empresas_primario,
-  values_fill = list(total_empresas_primario = 0)
-)
-
-View(result_principais_wide)
 
 # COMBINANDO AS DUAS TABELAS - SISAGUA E CNAE PRIMARIO
 # AQUI TEMOS A PLANILHA 10 !!!!!
 
 dados_combinados <- dados_sisagua_p7_agrupados |> 
-  left_join(result_principais_wide, by='municipio') # mudar aqui
+  left_join(df_pivot, by='codigo_ibge') 
 
 attach(dados_combinados)
 
 View(dados_combinados)
 
-summary(dados_combinados)
+View(df_pivot)
 
 dim(table(dados_combinados$municipio)) # 2782
+
+
+
+
+
+
+colnames(dados_sisagua_p7_agrupados) # Nomes das colunas da tabelaA
+colnames(df_pivot) # Nomes das colunas da tabelaB
+str(dados_sisagua_p7_agrupados$codigo_ibge)
+str(df_pivot$codigo_ibge)
+
+# Converter codigo_ibge para character em ambas as tabelas
+dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados %>%
+  mutate(codigo_ibge = as.character(codigo_ibge))
+
+df_pivot <- df_pivot %>%
+  mutate(codigo_ibge = as.character(codigo_ibge))
+
+
+dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados %>%
+  mutate(codigo_ibge = str_pad(codigo_ibge, width = 7, pad = "0"))
+
+df_pivot <- df_pivot %>%
+  mutate(codigo_ibge = str_pad(codigo_ibge, width = 7, pad = "0"))
+
+
+
+
+dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados %>%
+  mutate(codigo_ibge = trimws(codigo_ibge))
+
+df_pivot <- df_pivot %>%
+  mutate(codigo_ibge = trimws(codigo_ibge))
+
+
+
+
+codigo_teste <- "0110012"
+
+
+# Verificar se ele existe na tabela A
+codigo_teste %in% dados_sisagua_p7_agrupados$codigo_ibge
+
+# Verificar se ele existe na tabela B
+codigo_teste %in% df_pivot$codigo_ibge
+
+
+
+head(dados_sisagua_p7_agrupados$codigo_ibge, 20)
+head(df_pivot$codigo_ibge, 20)
+
+df_pivot_filtrado <- df_pivot %>%
+  filter(codigo_ibge %in% dados_sisagua_p7_agrupados$codigo_ibge)
+
+nrow(df_pivot_filtrado)
+
+nchar(dados_sisagua_p7_agrupados$codigo_ibge[1])
+nchar(df_pivot$codigo_ibge[1])
+
+
+
+
+Encoding(dados_sisagua_p7_agrupados$codigo_ibge)
+Encoding(df_pivot$codigo_ibge)
+
+diferenca_A <- setdiff(dados_sisagua_p7_agrupados$codigo_ibge, df_pivot$codigo_ibge)
+
+# Encontrar códigos IBGE da tabela B que não estão na tabela A
+diferenca_B <- setdiff(df_pivot$codigo_ibge, dados_sisagua_p7_agrupados$codigo_ibge)
+
+# Mostrar os primeiros valores diferentes
+head(diferenca_A, 10)
+head(diferenca_B, 10)
 
 
 
@@ -63,20 +125,44 @@ dim(table(dados_combinados$municipio)) # 2782
 
 # Paramentros - Acrilamida, Antimônio, Arsênio, Bário, Cádmio, Chumbo, Cromo, Cobre, Níquel, Nitrato (como N), Selênio
 
-cnaes_nitrato <- c(
-  "111301", "111302", "111303", "111399", "112101", "112102", "112199", "113000",
-  "114800", "115600", "116401", "116402", "116403", "116499", "119901", "119902",
-  "119903", "119904", "119905", "119906", "119907", "119908", "119909", "119999",
-  "121101", "121102", "122900", "131800", "132600", "133401", "133402", "133403",
-  "133404", "133405", "133406", "133407", "133408", "133409", "133410", "133411",
-  "133499", "134200", "135100", "139301", "139302", "139303", "139304", "139305",
-  "139306", "139399", "141501", "141502", "142300", "151201", "151202", "151203",
-  "152101", "152102", "152103", "153901", "153902", "154700", "155501", "155502",
-  "155503", "155504", "155505", "159899", "161001", "161003", "210101", "210102",
-  "210103", "210104", "210105", "210106", "210108", "220902", "1013901", "1052000",
-  "2012600", "2013401", "2013402", "2019399", "2092401", "2092402", "2110600",
-  "2121101", "2122000", "3839401"
-)
+
+filtros_cnaes<-read_csv("Poluentes_Ref._Planilha_6 e 1_Samara_04-12-2024.csv")
+
+# filtro cnaes - NITRATO 
+cnaes_nitrato<-filtros_cnaes |> 
+  filter(Parâmetro == "Nitrato (como N)") |> 
+  select(CNAE)
+
+# filtor cnaes - Acrilamida
+
+cnaes_acrilamida<-filtros_cnaes |> 
+  filter(Parâmetro == "Acrilamida") |> 
+  select(CNAE)
+
+
+# filtor cnaes - Acrilamida
+
+cnaes_acrilamida<-filtros_cnaes |> 
+  filter(Parâmetro == "Acrilamida") |> 
+  select(CNAE)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 tabela_nitrato <- dados_combinados |> 
