@@ -30,113 +30,163 @@ load_csv_data <- function(csv_path) {
   return(data[[cnae_column]])
 }
 
-# Caminho do CSV
-csv_path <- "Poluentes_Ref._Planilha_6 e 1_Samara_04-12-2024.csv"
 
-# Carregar os CNAEs do CSV
-cnae_list <- load_csv_data(csv_path)
+# Carregar o arquivo CSV
+file_path <- "Poluentes_Ref._Planilha_6 e 1_Samara_04-12-2024.csv"
+df <- read_csv(file_path)
 
-# Verificar o tamanho da lista de CNAEs
-length(cnae_list)
+# Garantir que a coluna CNAE é um vetor de strings com 7 dígitos
+df <- df %>% mutate(CNAE = sprintf("%07d", as.integer(CNAE)))
 
-# Gerar a string de CNAEs formatada para a consulta SQL
-cnae_values <- paste(cnae_list, collapse = ",")
-print(cnae_values)
+# Obter os CNAEs únicos do arquivo
+cnaes_do_arquivo <- unique(df$CNAE)
+
+# Exibir os primeiros CNAEs para conferência
+View(cnaes_do_arquivo)
 
 
-typeof(cnae_values)
 
-# NOVA QUERY  
-# Executa a query no banco de dados
-# Construir a query apenas para CNAEs principais
-query_cnaes_principais <- glue_sql("
+
+##########################################
+# Query SQL para contar estabelecimentos por município e CNAE primário
+query <- glue::glue_sql("
   SELECT 
-      m.nome AS municipio_nome,
-      c.codigo AS cnae_codigo_primario,
-      COUNT(e.id) AS total_empresas_primario
-  FROM 
-      municipios m
-  LEFT JOIN 
-      estabelecimentos e ON m.codigo = e.municipio_id
-  LEFT JOIN 
-      cnaes c ON e.cnae_fiscal_principal = c.codigo
-  WHERE 
-      c.codigo IN ({DBI::SQL(cnae_values)})
-  GROUP BY 
-      m.nome, c.codigo
-  ORDER BY 
-      m.nome, c.codigo;
+      m.codigo_ibge,
+      m.nome AS municipio,
+      e.cnae_fiscal_principal AS cnae,
+      COUNT(*) AS num_estabelecimentos
+  FROM estabelecimentos e
+  JOIN municipios m ON e.municipio_id = m.codigo
+  WHERE e.cnae_fiscal_principal IN ({cnaes_do_arquivo*})
+  GROUP BY m.codigo_ibge, m.nome, e.cnae_fiscal_principal
 ", .con = con)
 
-# Executar a query no banco de dados
-result_principais <- dbGetQuery(con, query_cnaes_principais)
+# Executar a query e carregar os dados
+df_db <- dbGetQuery(con, query)
 
-# Visualizar os resultados
-print(result_principais)
+# Transformar a tabela para formato pivotado
+df_pivot <- df_db %>%
+  pivot_wider(names_from = cnae, values_from = num_estabelecimentos, values_fill = 0)
 
-View(result_principais)
+# Adicionar a coluna codigo_ibge como primeira coluna
+# AQUI NAO PRECISA RODAR 
 
-dim(table(result_principais$cnae_codigo))
+df_pivot <- df_db %>%
+  select(codigo_ibge, municipio, everything())
+
+View(df_pivot)
+
+# Salvar a tabela em CSV se necessário
+write_csv(df_pivot, "cnaes_por_municipio.csv")
+
+# Visualizar os primeiros registros
+print(head(df_pivot))
+
+###########################################
+
+
 
 # CONSULTA CNAEs secundario
 
-# Construir a query para CNAEs secundários
-query_cnaes_secundarios <- glue_sql("
+
+# Query SQL para contar estabelecimentos por município e CNAE secundário, incluindo código IBGE
+query_sec <- glue::glue_sql("
+  WITH cnaes_exploded AS (
+      SELECT 
+          e.id AS estabelecimento_id,
+          m.codigo_ibge,
+          m.nome AS municipio,
+          unnest(e.cnaes_secundarios) AS cnae
+      FROM estabelecimentos e
+      JOIN municipios m ON e.municipio_id = m.codigo
+  )
   SELECT 
-      m.nome AS municipio_nome,
-      c.codigo AS cnae_codigo_secundario,
-      COUNT(DISTINCT e.id) AS total_empresas_secundario
-  FROM 
-      municipios m
-  LEFT JOIN 
-      estabelecimentos e ON m.codigo = e.municipio_id
-  LEFT JOIN 
-      estabelecimento_cnaes_secundarios ecs ON e.id = ecs.estabelecimento_id
-  LEFT JOIN 
-      cnaes c ON ecs.cnae_id = c.codigo
-  WHERE 
-      c.codigo IN ({DBI::SQL(cnae_values)})
-  GROUP BY 
-      m.nome, c.codigo
-  ORDER BY 
-      m.nome, c.codigo;
+      codigo_ibge,
+      municipio,
+      cnae,
+      COUNT(*) AS num_estabelecimentos
+  FROM cnaes_exploded
+  WHERE cnae IN ({cnaes_do_arquivo*})
+  GROUP BY codigo_ibge, municipio, cnae
+  ORDER BY municipio, num_estabelecimentos DESC
 ", .con = con)
 
-# Executar a query no banco de dados
-result_secundarios <- dbGetQuery(con, query_cnaes_secundarios)
+# Executar a query e carregar os dados
+df_db_sec <- dbGetQuery(con, query_sec)
 
-# Visualizar os resultados
-print(result_secundarios)
+# Transformar a tabela para formato pivotado
+df_pivot_sec <- df_db_sec %>%
+  pivot_wider(names_from = cnae, values_from = num_estabelecimentos, values_fill = 0)
 
-View(result_secundarios)
+View(df_pivot_sec)
+# Adicionar a coluna codigo_ibge como primeira coluna
+df_pivot <- df_pivot %>%
+  select(codigo_ibge, municipio, everything())
+
+# Visualizar os primeiros registros
+View(df_pivot)
+
+# Salvar a tabela em CSV se necessário
+write_csv(df_pivot, "cnaes_secundarios_por_municipio.csv")
+
+# Fechar a conexão
+dbDisconnect(con)
+##########################################
 
 
-
-## data set com a junção dos cnaes primarios e secundarios
-
-
-resultado_final_cnae_ps<-result_principais |> 
-  left_join(result_secundarios, by = 'municipio_nome', relationship = 'manny-to-many') |> 
-  group_by(municipio_nome, cnae_codigo_primario) |> 
-  summarise(
-    total_empresas_primario = sum(total_empresas_primario, na.rm = TRUE),
-    total_empresas_somado = total_empresas_primario + sum(total_empresas_secundario, na.rm = TRUE),
-    .groups = "drop"
+# Query SQL para contar estabelecimentos por município considerando CNAEs Primários e Secundários
+query <- glue::glue_sql("
+  WITH cnaes_exploded AS (
+      -- CNAEs Primários
+      SELECT 
+          e.id AS estabelecimento_id,
+          m.codigo_ibge,
+          m.nome AS municipio,
+          e.cnae_fiscal_principal AS cnae
+      FROM estabelecimentos e
+      JOIN municipios m ON e.municipio_id = m.codigo
+      WHERE e.cnae_fiscal_principal IN ({cnaes_do_arquivo*})
+      
+      UNION ALL
+      
+      -- CNAEs Secundários (Explodindo o ARRAY)
+      SELECT 
+          e.id AS estabelecimento_id,
+          m.codigo_ibge,
+          m.nome AS municipio,
+          unnest(e.cnaes_secundarios) AS cnae
+      FROM estabelecimentos e
+      JOIN municipios m ON e.municipio_id = m.codigo
+      WHERE unnest(e.cnaes_secundarios) IN ({cnaes_do_arquivo*})
   )
+  SELECT 
+      codigo_ibge,
+      municipio,
+      cnae,
+      COUNT(*) AS num_estabelecimentos
+  FROM cnaes_exploded
+  GROUP BY codigo_ibge, municipio, cnae
+  ORDER BY municipio, num_estabelecimentos DESC
+", .con = con)
 
+# Executar a query e carregar os dados
+df_db <- dbGetQuery(con, query)
 
+# Transformar a tabela para formato pivotado
+df_pivot <- df_db %>%
+  pivot_wider(names_from = cnae, values_from = num_estabelecimentos, values_fill = 0)
 
+# Adicionar a coluna codigo_ibge como primeira coluna
+df_pivot <- df_pivot %>%
+  select(codigo_ibge, municipio, everything())
 
-# Opcional: Salvar o resultado em um arquivo CSV para análise
-write.csv(result_pivot_principais, "cnaes_principais_pivot.csv", row.names = FALSE)
+# Visualizar os primeiros registros
+View(df_pivot)
 
+# Salvar a tabela em CSV se necessário
+write_csv(df_pivot, "cnaes_primario_secundario_por_municipio.csv")
 
-# # Mostrar o caminho do arquivo gerado
-# cat("Arquivo exportado para:", export_file_path, "\n")
-# 
-
- # IMPORTANTE
-# # Desconectar do banco de dados
-# dbDisconnect(con)
+# Fechar a conexão
+dbDisconnect(con)
 
 
