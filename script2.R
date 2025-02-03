@@ -96,7 +96,7 @@ table(tabela_NA$municipio)
 # AQUI TEMOS A PLANILHA 10 !!!!!
 
 dados_combinados <- dados_sisagua_p7_agrupados |> 
-  left_join(df_pivot, by='codigo_ibge') 
+  left_join(df_cnaes_primarios, by='codigo_ibge') 
 
 attach(dados_combinados)
 
