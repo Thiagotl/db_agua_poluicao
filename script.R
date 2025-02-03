@@ -23,12 +23,12 @@ tabela <-tbl(con, "cnaes")
 
 
 
-#cnae_list <- load_csv_data(csv_path)
-load_csv_data <- function(csv_path) {
-  data <- read.csv(csv_path, stringsAsFactors = FALSE)
-  cnae_column <- "CNAE"  # Ajuste o nome da coluna que contém os CNAEs no CSV
-  return(data[[cnae_column]])
-}
+# #cnae_list <- load_csv_data(csv_path)
+# load_csv_data <- function(csv_path) {
+#   data <- read.csv(csv_path, stringsAsFactors = FALSE)
+#   cnae_column <- "CNAE"  # Ajuste o nome da coluna que contém os CNAEs no CSV
+#   return(data[[cnae_column]])
+# }
 
 
 # Carregar o arquivo CSV
@@ -36,16 +36,13 @@ file_path <- "Poluentes_Ref._Planilha_6 e 1_Samara_04-12-2024.csv"
 df <- read_csv(file_path)
 
 # Garantir que a coluna CNAE é um vetor de strings com 7 dígitos
-df <- df %>% mutate(CNAE = sprintf("%07d", as.integer(CNAE)))
+df <- df  |>  mutate(CNAE = sprintf("%07d", as.integer(CNAE)))
 
 # Obter os CNAEs únicos do arquivo
 cnaes_do_arquivo <- unique(df$CNAE)
 
 # Exibir os primeiros CNAEs para conferência
 View(cnaes_do_arquivo)
-
-
-
 
 ##########################################
 # Query SQL para contar estabelecimentos por município e CNAE primário
@@ -65,27 +62,22 @@ query <- glue::glue_sql("
 df_db <- dbGetQuery(con, query)
 
 # Transformar a tabela para formato pivotado
-df_pivot <- df_db %>%
+df_cnaes_primarios <- df_db  |> 
   pivot_wider(names_from = cnae, values_from = num_estabelecimentos, values_fill = 0)
 
 # Adicionar a coluna codigo_ibge como primeira coluna
 # AQUI NAO PRECISA RODAR 
 
-df_pivot <- df_db %>%
+df_cnaes_primarios <- df_db  |> 
   select(codigo_ibge, municipio, everything())
 
-View(df_pivot)
+View(df_cnaes_primarios)
 
 # Salvar a tabela em CSV se necessário
 write_csv(df_pivot, "cnaes_por_municipio.csv")
 
-# Visualizar os primeiros registros
-print(head(df_pivot))
 
 ###########################################
-
-
-
 # CONSULTA CNAEs secundario
 
 
