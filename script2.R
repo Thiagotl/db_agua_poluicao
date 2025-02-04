@@ -77,7 +77,7 @@ df_cnaes_primarios$municipio <- toupper(stri_trans_general(df_cnaes_primarios$mu
 
 view(df_cnaes_primarios)
 
-#############################
+
 ### AJUSTE DO CÓDIGO IBGE NA TABELA df_cnaes_primarios ###
 
 
@@ -121,8 +121,6 @@ view(df_cnaes_primarios)
 # 
 # table(tabela_NA$municipio, tabela_NA$uf)
 
-#########################################
-
 
 # COMBINANDO AS DUAS TABELAS - SISAGUA E CNAE PRIMARIO
 # AQUI TEMOS A PLANILHA 10 !!!!!
@@ -151,98 +149,155 @@ dim(table(dados_sisagua_p7_agrupados$municipio)) # 2779
 
 
 df_cnaes_primarios <- df_cnaes_primarios |> 
+  select(-c(municipio))
 
-
+####### PLANILHA 10 AQUIIIII #######
 
 dados_combinados <- dados_sisagua_p7_agrupados |> 
   left_join(df_cnaes_primarios, by='codigo_ibge') 
 
 attach(dados_combinados)
 
-
-
 View(dados_combinados)
 
+dim(table(dados_combinados$municipio)) # 2779
 
 
-dim(table(dados_combinados$municipio.x)) # 
-
-tabela_b<-dados_combinados[!complete.cases(dados_combinados), ]
-View(tabela_b)
+write_csv(dados_combinados, "dados_combinado.csv")
 
 
+####### TESTANDO ALGUNS FILTROS #####
 
-
-
-
-
-### TESTANDO ALGUNS FILTROS 
-
-# Paramentros - Acrilamida, Antimônio, Arsênio, Bário, Cádmio, Chumbo, Cromo, Cobre, Níquel, Nitrato (como N), Selênio
+# Paramentros - Acrilamida, Antimônio, Arsênio, Bário, Cádmio, Chumbo, Cromo, 
+#               Cobre, Níquel, Nitrato (como N), Selênio
 
 
 filtros_cnaes<-read_csv("Poluentes_Ref._Planilha_6 e 1_Samara_04-12-2024.csv")
 
-# filtro cnaes - NITRATO 
+
+# filtor cnaes - Acrilamida
+
+cnaes_acrilamida<-filtros_cnaes |> 
+  filter(Parâmetro == "Acrilamida") |> 
+  select(CNAE)
+
+
+# filtor cnaes - Antimônio
+
+cnaes_Antimônio<-filtros_cnaes |> 
+  filter(Parâmetro == "Antimônio") |> 
+  select(CNAE)
+
+
+# filtor cnaes - Arsênio
+
+cnaes_arsenio<-filtros_cnaes |> 
+  filter(Parâmetro == "Arsênio") |> 
+  select(CNAE)
+
+
+# filtor cnaes - Bário
+
+cnaes_bario<-filtros_cnaes |> 
+  filter(Parâmetro == "Bário") |> 
+  select(CNAE)
+
+# filtor cnaes - Cádmio
+
+cnaes_cadmio<-filtros_cnaes |> 
+  filter(Parâmetro == "Cádmio") |> 
+  select(CNAE)
+
+# filtor cnaes - Chumbo
+
+cnaes_chumbo<-filtros_cnaes |> 
+  filter(Parâmetro == "Chumbo") |> 
+  select(CNAE)
+
+# filtor cnaes - Cromo
+
+cnaes_cromo<-filtros_cnaes |> 
+  filter(Parâmetro == "Cromo") |> 
+  select(CNAE)
+
+
+# filtor cnaes - Cobre
+
+cnaes_cobre<-filtros_cnaes |> 
+  filter(Parâmetro == "Cobre") |> 
+  select(CNAE)
+
+# filtor cnaes - Níquel
+
+cnaes_niquel<-filtros_cnaes |> 
+  filter(Parâmetro == "Níquel") |> 
+  select(CNAE)
+
+
+# filtro cnaes - Nitrato (como N)
 cnaes_nitrato<-filtros_cnaes |> 
   filter(Parâmetro == "Nitrato (como N)") |> 
+  mutate(CNAE = as.character(CNAE)) |> 
+  pull(CNAE)
+View(cnaes_nitrato) # 90 CNAES
+
+cnaes_nitrato <- sub("^0+", "", cnaes_nitrato)
+
+# filtro cnaes - Selênio 
+cnaes_selenio<-filtros_cnaes |> 
+  filter(Parâmetro == "Selênio") |> 
   select(CNAE)
 
-# filtor cnaes - Acrilamida
+#####################
+# funcao para extrair cnaes
 
-cnaes_acrilamida<-filtros_cnaes |> 
-  filter(Parâmetro == "Acrilamida") |> 
-  select(CNAE)
+extrais_cnaes <- function(df, parametro){
+  df |> 
+    filter(Parâmetro == parametro) |> 
+    mutate(CNAE = as.character(CNAE)) |> 
+    pull(CNAE)
+}
+cnaes_nitrato <- sub("^0+", "", cnaes_nitrato) # colocar na funcao
+# testas depois
 
+#####################
 
-# filtor cnaes - Acrilamida
+# uma alteracao para os dados combinados
 
-cnaes_acrilamida<-filtros_cnaes |> 
-  filter(Parâmetro == "Acrilamida") |> 
-  select(CNAE)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+colnames(dados_combinados) <- as.character(colnames(dados_combinados))
 
 
 
 tabela_nitrato <- dados_combinados |> 
   filter(parâmetro == "Nitrato (como N)") |> 
-  select(municipio,parâmetro,`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ` ,
-         `Total de inconsistentes`, `Total de Consistentes não detectados`, `Total de parâmetros com MENOR_LQ`,
-         `Total de Consistentes detectados Abaixo do VMP`,`Total de Consistentes detectados Acima do VMP`,Total_Detectados ,
-         all_of(cnaes_nitrato))
+  select(municipio,parâmetro,
+         `Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,
+         `Total de inconsistentes`, `Total de Consistentes não detectados`, 
+         `Total de parâmetros com MENOR_LQ`,
+         `Total de Consistentes detectados Abaixo do VMP`,
+         `Total de Consistentes detectados Acima do VMP`,Total_Detectados ,
+         all_of(cnaes_nitrato)
+         )
 
-  
+
 
 View(tabela_nitrato)
 
 colSums(is.na(tabela_nitrato))
 sum(is.na(tabela_nitrato))
-tabela_nitrato[is.na(tabela_nitrato)] <- 0
 
-tabela_nitrato<-as.data.frame(tabela_nitrato)
+apply(tabela_nitrato[, -c(1, 2)], 2, sd, na.rm = TRUE)
+#tabela_nitrato[is.na(tabela_nitrato)] <- 0
 
 
-t1<-cor(tabela_nitrato$`Total de Consistentes detectados Acima do VMP`, tabela_nitrato[,-c(1,2,)])
 
-t1
 
-cor.test(tabela_nitrato$`Total de Consistentes detectados Acima do VMP`, tabela_nitrato$`111302`)
+
+
+t1<-as.data.frame(cor(tabela_nitrato[,-c(1,2)]))
+
+View(t1)
+cor.test(tabela_nitrato$`Total de Consistentes detectados Acima do VMP`, tabela_nitrato$`1052000`)
 
 t2<-cor(tabela_nitrato$`Total de Consistentes detectados Abaixo do VMP`, tabela_nitrato[,-c(1,2)])
 
