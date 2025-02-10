@@ -67,14 +67,14 @@ df_cnaes_primarios <- df_db  |>
 
 # Adicionar a coluna codigo_ibge como primeira coluna
 # AQUI NAO PRECISA RODAR 
-
-df_cnaes_primarios <- df_db  |> 
-  select(codigo_ibge, municipio, everything())
-
-View(df_cnaes_primarios)
+# 
+# df_cnaes_primarios <- df_db  |> 
+#   select(codigo_ibge, municipio, everything())
+# 
+# View(df_cnaes_primarios)
 
 # Salvar a tabela em CSV se necessário
-write_csv(df_pivot, "cnaes_por_municipio.csv")
+#write_csv(df_pivot, "cnaes_por_municipio.csv")
 
 
 ###########################################

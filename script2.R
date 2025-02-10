@@ -13,7 +13,7 @@ colnames(dados_sisagua_p7)[colnames(dados_sisagua_p7)=="código_ibge"] <-'codigo
 colnames(dados_sisagua_p7)[colnames(dados_sisagua_p7)=="município"] <-'municipio'
 
 dim(table(dados_sisagua_p7$município)) # sao 2782
-dim(table(df_pivot$municipio)) # 5246
+#dim(table(df_pivot$municipio)) # 5246
 
 attach(dados_sisagua_p7)
 
@@ -89,39 +89,6 @@ df_cnaes_primarios <- df_cnaes_primarios |>
 # Exibir a tabela modificada
 view(df_cnaes_primarios)
 
-
-# AJUSTE PARA TABELA dados_sisagua_p7_agrupados
-
-# tabela_A_corrigida <- dados_sisagua_p7_agrupados  |> 
-#   mutate(
-#     codigo_completo = sapply(codigo_ibge, function(cod) {
-#       match_code <- df_cnaes_primarios$codigo_ibge[str_detect(df_cnaes_primarios$codigo_ibge, paste0("^", cod))]
-#       if (length(match_code) > 0) {
-#         return(match_code)  # Retorna o código completo encontrado
-#       } else {
-#         return(NA)  # Caso não encontre um correspondente
-#       }
-#     }),
-#     digito_faltante = ifelse(!is.na(codigo_completo), substr(codigo_completo, 7, 7), NA)
-#   )
-# 
-# View(tabela_A_corrigida)
-# 
-# dim(table(tabela_A_corrigida$municipio)) #2782
-# 
-# any(is.na(tabela_A_corrigida))
-# 
-# sum(is.na(tabela_A_corrigida))
-# 
-# names(tabela_A_corrigida)[colSums(is.na(tabela_A_corrigida)) > 0]
-# 
-# tabela_NA<-tabela_A_corrigida[!complete.cases(tabela_A_corrigida), ]
-# 
-# View(tabela_NA)
-# 
-# table(tabela_NA$municipio, tabela_NA$uf)
-
-
 # COMBINANDO AS DUAS TABELAS - SISAGUA E CNAE PRIMARIO
 # AQUI TEMOS A PLANILHA 10 !!!!!
 
@@ -131,8 +98,8 @@ dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados |>
 df_cnaes_primarios <- df_cnaes_primarios  |> 
   mutate(codigo_ibge = as.character(codigo_ibge))
 
-nchar(dados_sisagua_p7_agrupados$codigo_ibge[])
-nchar(df_cnaes_primarios$codigo_ibge[])
+#nchar(dados_sisagua_p7_agrupados$codigo_ibge[])
+#nchar(df_cnaes_primarios$codigo_ibge[])
 
 
 str(dados_sisagua_p7_agrupados$codigo_ibge)
@@ -283,44 +250,36 @@ tabela_nitrato <- dados_combinados |>
 
 View(tabela_nitrato)
 
-colSums(is.na(tabela_nitrato))
-sum(is.na(tabela_nitrato))
 
-apply(tabela_nitrato[, -c(1, 2)], 2, sd, na.rm = TRUE)
-#tabela_nitrato[is.na(tabela_nitrato)] <- 0
-
-
-
-
-
-
-t1<-as.data.frame(cor(tabela_nitrato[,-c(1,2)]))
-
-View(t1)
-cor.test(tabela_nitrato$`Total de Consistentes detectados Acima do VMP`, tabela_nitrato$`1052000`)
-
-t2<-cor(tabela_nitrato$`Total de Consistentes detectados Abaixo do VMP`, tabela_nitrato[,-c(1,2)])
-
-plot(t2)
-View(t2)
+tabela_nitrato <-as.data.frame(tabela_nitrato)
+tabela_nitrato<-tabela_nitrato |> 
+  mutate(across(10:99, as.double))
+class(tabela_nitrato)
 
 zero_sd_cols <- sapply(tabela_nitrato[, -c(1:2)], function(x) sd(x, na.rm = TRUE) == 0)
 zero_sd_cols  # Retorna TRUE para colunas com desvio padrão zero
 
-#tabela_filtrada <- tabela_nitrato[, -c(1:2)][, sapply(tabela_nitrato[, -c(1:2)], sd, na.rm = TRUE) > 0]
 
 
 
+
+t1<-round(cor(tabela_nitrato[,-c(1,2,15)]), 4)
+View(t1)
+
+
+library(ggcorrplot)
+ggcorrplot(t1)
+
+
+#cor.test(tabela_nitrato$`Total de Consistentes detectados Acima do VMP`, tabela_nitrato$`111301`)
+
+#t2<-cor(tabela_nitrato$`Total de Consistentes detectados Abaixo do VMP`, tabela_nitrato[,-c(1,2)])
 
 
 
 #### TESTE PARA MATRIZ DE CORRELAÇÃO
 
 
-cor_matrix <- cor(tabela_nitrato[,-c(1,2,15)], use = "pairwise.complete.obs")
-View(cor_matrix)
 library(heatmaply)
 
-# Criando um heatmap interativo
-heatmaply(cor_matrix, colors = colorRampPalette(c("blue", "white", "red"))(200), 
-          dendrogram = "row", k_row = 5, k_col = 5)
+#https://cran.r-project.org/web/packages/heatmaply/vignettes/heatmaply.html
