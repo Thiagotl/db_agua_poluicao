@@ -200,16 +200,6 @@ cnaes_niquel<-filtros_cnaes |>
   filter(Parâmetro == "Níquel") |> 
   select(CNAE)
 
-
-# filtro cnaes - Nitrato (como N)
-cnaes_nitrato<-filtros_cnaes |> 
-  filter(Parâmetro == "Nitrato (como N)") |> 
-  mutate(CNAE = as.character(CNAE)) |> 
-  pull(CNAE)
-View(cnaes_nitrato) # 90 CNAES
-
-cnaes_nitrato <- sub("^0+", "", cnaes_nitrato)
-
 # filtro cnaes - Selênio 
 cnaes_selenio<-filtros_cnaes |> 
   filter(Parâmetro == "Selênio") |> 
@@ -218,14 +208,20 @@ cnaes_selenio<-filtros_cnaes |>
 #####################
 # funcao para extrair cnaes
 
-extrais_cnaes <- function(df, parametro){
+extrair_cnaes <- function(df, parametro){
   df |> 
     filter(Parâmetro == parametro) |> 
     mutate(CNAE = as.character(CNAE)) |> 
-    pull(CNAE)
+    pull(CNAE) 
 }
 cnaes_nitrato <- sub("^0+", "", cnaes_nitrato) # colocar na funcao
 # testas depois
+
+
+t3<-extrair_cnaes(filtros_cnaes, "Selênio")
+
+View(filtros_cnaes)
+
 
 #####################
 
@@ -234,10 +230,15 @@ cnaes_nitrato <- sub("^0+", "", cnaes_nitrato) # colocar na funcao
 colnames(dados_combinados) <- as.character(colnames(dados_combinados))
 
 
+############# FILTROS PARA OS PARÂMETROS
+
+cnaes_nitrato<-extrair_cnaes(filtros_cnaes, "Nitrato (como N)")
+
+cnaes_nitrato <- sub("^0+", "", cnaes_nitrato)
 
 tabela_nitrato <- dados_combinados |> 
   filter(parâmetro == "Nitrato (como N)") |> 
-  select(municipio,parâmetro,
+  select(municipio,parâmetro,uf,
          `Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,
          `Total de inconsistentes`, `Total de Consistentes não detectados`, 
          `Total de parâmetros com MENOR_LQ`,
@@ -246,24 +247,21 @@ tabela_nitrato <- dados_combinados |>
          all_of(cnaes_nitrato)
          )
 
-
-
 View(tabela_nitrato)
 
 
 tabela_nitrato <-as.data.frame(tabela_nitrato)
-tabela_nitrato<-tabela_nitrato |> 
-  mutate(across(10:99, as.double))
-class(tabela_nitrato)
 
-zero_sd_cols <- sapply(tabela_nitrato[, -c(1:2)], function(x) sd(x, na.rm = TRUE) == 0)
+tabela_nitrato<-tabela_nitrato |> 
+  mutate(across(11:99, as.double))
+
+
+
+zero_sd_cols <- sapply(tabela_nitrato[, -c(1:3)], function(x) sd(x, na.rm = TRUE) == 0)
 zero_sd_cols  # Retorna TRUE para colunas com desvio padrão zero
 
 
-
-
-
-t1<-round(cor(tabela_nitrato[,-c(1,2,15)]), 4)
+t1<-round(cor(tabela_nitrato[,-c(1:3,16)]), 4)
 View(t1)
 
 
