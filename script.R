@@ -21,16 +21,6 @@ con <- dbConnect(
 
 tabela <-tbl(con, "cnaes")
 
-
-
-# #cnae_list <- load_csv_data(csv_path)
-# load_csv_data <- function(csv_path) {
-#   data <- read.csv(csv_path, stringsAsFactors = FALSE)
-#   cnae_column <- "CNAE"  # Ajuste o nome da coluna que contém os CNAEs no CSV
-#   return(data[[cnae_column]])
-# }
-
-
 # Carregar o arquivo CSV
 file_path <- "Poluentes_Ref._Planilha_6 e 1_Samara_04-12-2024.csv"
 df <- read_csv(file_path)

@@ -1,5 +1,6 @@
 library(readr)
 library(stringi)
+library(heatmaply)
 
 # link importante - https://www.gov.br/receitafederal/dados/municipios.csv
 # link importante - https://www.ibge.gov.br/explica/codigos-dos-municipios.php
@@ -12,8 +13,8 @@ colnames(dados_sisagua_p7)[colnames(dados_sisagua_p7)=="código_ibge"] <-'codigo
 
 colnames(dados_sisagua_p7)[colnames(dados_sisagua_p7)=="município"] <-'municipio'
 
-dim(table(dados_sisagua_p7$município)) # sao 2782
-#dim(table(df_pivot$municipio)) # 5246
+dim(table(dados_sisagua_p7$municipio)) # sao 2782
+
 
 attach(dados_sisagua_p7)
 
@@ -75,12 +76,7 @@ df_cnaes_primarios$municipio <- toupper(stri_trans_general(df_cnaes_primarios$mu
                                                            "Latin-ASCII"))
 
 
-view(df_cnaes_primarios)
-
-
-### AJUSTE DO CÓDIGO IBGE NA TABELA df_cnaes_primarios ###
-
-
+##### AJUSTE DO CÓDIGO IBGE NA TABELA df_cnaes_primarios ####
 
 # Remover o último dígito dos códigos IBGE
 df_cnaes_primarios <- df_cnaes_primarios |> 
@@ -133,6 +129,10 @@ dim(table(dados_combinados$municipio)) # 2779
 write_csv(dados_combinados, "dados_combinado.csv")
 
 
+# uma alteracao para os dados combinados
+
+colnames(dados_combinados) <- as.character(colnames(dados_combinados))
+
 ####### TESTANDO ALGUNS FILTROS #####
 
 # Paramentros - Acrilamida, Antimônio, Arsênio, Bário, Cádmio, Chumbo, Cromo, 
@@ -140,13 +140,6 @@ write_csv(dados_combinados, "dados_combinado.csv")
 
 
 filtros_cnaes<-read_csv("Poluentes_Ref._Planilha_6 e 1_Samara_04-12-2024.csv")
-
-
-# filtor cnaes - Acrilamida
-
-cnaes_acrilamida<-filtros_cnaes |> 
-  filter(Parâmetro == "Acrilamida") |> 
-  select(CNAE)
 
 
 # filtor cnaes - Antimônio
@@ -205,8 +198,7 @@ cnaes_selenio<-filtros_cnaes |>
   filter(Parâmetro == "Selênio") |> 
   select(CNAE)
 
-#####################
-# funcao para extrair cnaes
+#### FUNÇÃO PARA EXTRAIR CNAES ----
 
 extrair_cnaes <- function(df, parametro){
   df |> 
@@ -218,19 +210,7 @@ cnaes_nitrato <- sub("^0+", "", cnaes_nitrato) # colocar na funcao
 # testas depois
 
 
-t3<-extrair_cnaes(filtros_cnaes, "Selênio")
-
-View(filtros_cnaes)
-
-
-#####################
-
-# uma alteracao para os dados combinados
-
-colnames(dados_combinados) <- as.character(colnames(dados_combinados))
-
-
-############# FILTROS PARA OS PARÂMETROS
+###### FILTRO PARA NITRATO (COMO N) ----
 
 cnaes_nitrato<-extrair_cnaes(filtros_cnaes, "Nitrato (como N)")
 
@@ -245,15 +225,22 @@ tabela_nitrato <- dados_combinados |>
          `Total de Consistentes detectados Abaixo do VMP`,
          `Total de Consistentes detectados Acima do VMP`,Total_Detectados ,
          all_of(cnaes_nitrato)
-         )
+         ) |> 
+  arrange(municipio)
 
 View(tabela_nitrato)
 
 
 tabela_nitrato <-as.data.frame(tabela_nitrato)
 
+write_csv(tabela_nitrato, "planilha_nitrato_como_N.csv")
+
+
+
+# PARA CORRELAÇÃO Nitrato como N
+
 tabela_nitrato<-tabela_nitrato |> 
-  mutate(across(11:99, as.double))
+  mutate(across(11:100, as.double))
 
 
 
@@ -261,23 +248,81 @@ zero_sd_cols <- sapply(tabela_nitrato[, -c(1:3)], function(x) sd(x, na.rm = TRUE
 zero_sd_cols  # Retorna TRUE para colunas com desvio padrão zero
 
 
-t1<-round(cor(tabela_nitrato[,-c(1:3,16)]), 4)
+t1<-round(cor(tabela_nitrato[,-c(1:3,16)]), 5)
 View(t1)
 
+colnames(t1)[colnames(t1)=="Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ"] <-'Total de Testes'
 
-library(ggcorrplot)
-ggcorrplot(t1)
+colnames(t1)[colnames(t1)=="Total de inconsistentes"] <-'Tot inconst'
+colnames(t1)[colnames(t1)=="Total de Consistentes não detectados"] <-'Tot cons n dec'
+colnames(t1)[colnames(t1)=="Total de parâmetros com MENOR_LQ"] <-'Tot par menor LQ'
+colnames(t1)[colnames(t1)=="Total de Consistentes detectados Abaixo do VMP"] <-'Tot cons dec AB VMP'
+colnames(t1)[colnames(t1)=="Total de Consistentes detectados Acima do VMP"] <-'Tot cons dec AC VMP'
 
 
-#cor.test(tabela_nitrato$`Total de Consistentes detectados Acima do VMP`, tabela_nitrato$`111301`)
+heatmaply(t1)
 
-#t2<-cor(tabela_nitrato$`Total de Consistentes detectados Abaixo do VMP`, tabela_nitrato[,-c(1,2)])
 
+
+###### FILTRO PARA ACRILAMIDA ----
+
+cnaes_acrilamida <- extrair_cnaes(filtros_cnaes, "Acrilamida")
+
+cnaes_acrilamida <- sub("^0+","", cnaes_acrilamida)
+
+View(cnaes_acrilamida)
+
+tabela_acrilamida <- dados_combinados |> 
+  filter(parâmetro == "Acrilamida") |> 
+  select(municipio,parâmetro,uf,
+         `Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,
+         `Total de inconsistentes`, `Total de Consistentes não detectados`, 
+         `Total de parâmetros com MENOR_LQ`,
+         `Total de Consistentes detectados Abaixo do VMP`,
+         `Total de Consistentes detectados Acima do VMP`,Total_Detectados ,
+         all_of(cnaes_nitrato)) |> arrange(municipio)
+
+View(tabela_acrilamida)
+
+
+tabela_acrilamida <-as.data.frame(tabela_acrilamida)
+
+write_csv(tabela_acrilamida, "planilha_acrilamida.csv")
 
 
 #### TESTE PARA MATRIZ DE CORRELAÇÃO
 
 
-library(heatmaply)
+
 
 #https://cran.r-project.org/web/packages/heatmaply/vignettes/heatmaply.html
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
