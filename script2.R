@@ -141,7 +141,7 @@ colnames(dados_combinados) <- as.character(colnames(dados_combinados))
 
 filtros_cnaes<-read_csv("Poluentes_Ref._Planilha_6 e 1_Samara_04-12-2024.csv")
 
-
+table(filtros_cnaes$Parâmetro)
 # filtor cnaes - Antimônio
 
 cnaes_Antimônio<-filtros_cnaes |> 
@@ -280,17 +280,47 @@ tabela_acrilamida <- dados_combinados |>
          `Total de parâmetros com MENOR_LQ`,
          `Total de Consistentes detectados Abaixo do VMP`,
          `Total de Consistentes detectados Acima do VMP`,Total_Detectados ,
-         all_of(cnaes_nitrato)) |> arrange(municipio)
+         all_of(cnaes_acrilamida)) |> arrange(municipio)
 
 View(tabela_acrilamida)
 
 
+tabela_acrilamida<-tabela_acrilamida |> 
+  mutate(across(11:19, as.double))
+
 tabela_acrilamida <-as.data.frame(tabela_acrilamida)
 
+
+zero_sd_cols <- sapply(tabela_acrilamida[, -c(1:3)], function(x) sd(x, na.rm = TRUE) == 0)
+zero_sd_cols  # Retorna TRUE para colunas com desvio padrão zero
+
+t2<-cor(tabela_acrilamida[,-c(1:3)])
+View(t2)
+
+heatmaply(t2)
 write_csv(tabela_acrilamida, "planilha_acrilamida.csv")
 
 
-#### TESTE PARA MATRIZ DE CORRELAÇÃO
+hist(tabela_acrilamida$Total_Detectados)
+plot(tabela_acrilamida$`2029100`,tabela_acrilamida$Total_Detectados)
+
+cor.test(tabela_acrilamida$`2029100`,tabela_acrilamida$Total_Detectados, method = "kendall")
+
+
+table(tabela_acrilamida$`2029100`,tabela_acrilamida$Total_Detectados)
+
+prop.table(table(tabela_acrilamida$x,tabela_acrilamida$y ))
+
+
+tabela_acrilamida<-tabela_acrilamida |> 
+  mutate(y= ifelse(`2029100` > 0,1,0),
+         x= ifelse(Total_Detectados >0,1,0))
+
+chisq.test(table(tabela_acrilamida$x,tabela_acrilamida$y ))
+prop.table(table(tabela_acrilamida$y,tabela_acrilamida$x ),2)
+
+table(tabela_acrilamida$y,tabela_acrilamida$x )
+#### TESTE PARA MATRIZ Dx#### TESTE PARA MATRIZ DE CORRELAÇÃO
 
 
 
