@@ -27,11 +27,15 @@ prop1 = (`Total de Consistentes detectados Abaixo do VMP` +
                                                                `Total de parâmetros com MENOR_LQ`+
                                                                `Total de Consistentes detectados Abaixo do VMP`+
                                                                `Total de Consistentes detectados Acima do VMP`)
+
+prop1<-round(prop1, 2)
 # PROPORCAO DE  ABAIXO DO VMP / CONSISTENTE
 prop2= `Total de Consistentes detectados Abaixo do VMP`/(`Total de Consistentes não detectados`+
            `Total de parâmetros com MENOR_LQ`+
            `Total de Consistentes detectados Abaixo do VMP`+
            `Total de Consistentes detectados Acima do VMP`)
+
+prop2<-round(prop2, 2)
 
 dados_sisagua_p7_agrupados <- dados_sisagua_p7 |>
   select(municipio, parâmetro, uf, codigo_ibge, 
@@ -68,9 +72,7 @@ write.csv(dados_sisagua_p7_agrupados, "dados_filtrados.csv", row.names = FALSE)
 # objeto_filtrado <- read_feather("dados_sisagua_p7_agrupados.feather")
 
 
-# AJUSTE PARA CNAES - TODOS EM CAIXA ALTA E SEM ACENTO
-
-
+# AJUSTE PARA MUNICIPIOS - TODOS EM CAIXA ALTA E SEM ACENTO
 
 df_cnaes_primarios$municipio <- toupper(stri_trans_general(df_cnaes_primarios$municipio,
                                                            "Latin-ASCII"))
@@ -102,13 +104,13 @@ str(dados_sisagua_p7_agrupados$codigo_ibge)
 str(df_cnaes_primarios$codigo_ibge)
 
 
-# REMOVER AS TRÊS CIDADES SEM CÓDIGO IBGE. 
-municipios_para_remover <- c("GRANJEIRO", "SANTA FILOMENA", "SOLIDAO")
-
-dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados %>%
-  filter(!municipio %in% municipios_para_remover)
-
-dim(table(dados_sisagua_p7_agrupados$municipio)) # 2779
+# REMOVER AS TRÊS CIDADES SEM CÓDIGO IBGE. - PROBLEMA FOI RESOLVIDO
+# municipios_para_remover <- c("GRANJEIRO", "SANTA FILOMENA", "SOLIDAO")
+# 
+# dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados %>%
+#   filter(!municipio %in% municipios_para_remover)
+# 
+# dim(table(dados_sisagua_p7_agrupados$municipio)) # 2779
 
 
 df_cnaes_primarios <- df_cnaes_primarios |> 
@@ -123,7 +125,7 @@ attach(dados_combinados)
 
 View(dados_combinados)
 
-dim(table(dados_combinados$municipio)) # 2779
+dim(table(dados_combinados$municipio)) # 2782
 
 
 write_csv(dados_combinados, "dados_combinado.csv")
@@ -138,29 +140,20 @@ colnames(dados_combinados) <- as.character(colnames(dados_combinados))
 # Paramentros - Acrilamida, Antimônio, Arsênio, Bário, Cádmio, Chumbo, Cromo, 
 #               Cobre, Níquel, Nitrato (como N), Selênio
 
-
 filtros_cnaes<-read_csv("Poluentes_Ref._Planilha_6 e 1_Samara_04-12-2024.csv")
 
-table(filtros_cnaes$Parâmetro)
-# filtor cnaes - Antimônio
+#### FUNÇÃO PARA EXTRAIR CNAES ----
 
-cnaes_Antimônio<-filtros_cnaes |> 
-  filter(Parâmetro == "Antimônio") |> 
-  select(CNAE)
-
-
-# filtor cnaes - Arsênio
-
-cnaes_arsenio<-filtros_cnaes |> 
-  filter(Parâmetro == "Arsênio") |> 
-  select(CNAE)
+extrair_cnaes <- function(df, parametro){
+  df |> 
+    filter(Parâmetro == parametro) |> 
+    mutate(CNAE = as.character(CNAE)) |> 
+    pull(CNAE) 
+}
+#cnaes_nitrato <- sub("^0+", "", cnaes_nitrato) # colocar na funcao
 
 
-# filtor cnaes - Bário
 
-cnaes_bario<-filtros_cnaes |> 
-  filter(Parâmetro == "Bário") |> 
-  select(CNAE)
 
 # filtor cnaes - Cádmio
 
@@ -198,15 +191,7 @@ cnaes_selenio<-filtros_cnaes |>
   filter(Parâmetro == "Selênio") |> 
   select(CNAE)
 
-#### FUNÇÃO PARA EXTRAIR CNAES ----
 
-extrair_cnaes <- function(df, parametro){
-  df |> 
-    filter(Parâmetro == parametro) |> 
-    mutate(CNAE = as.character(CNAE)) |> 
-    pull(CNAE) 
-}
-cnaes_nitrato <- sub("^0+", "", cnaes_nitrato) # colocar na funcao
 # testas depois
 
 
@@ -218,12 +203,12 @@ cnaes_nitrato <- sub("^0+", "", cnaes_nitrato)
 
 tabela_nitrato <- dados_combinados |> 
   filter(parâmetro == "Nitrato (como N)") |> 
-  select(municipio,parâmetro,uf,
+  select(municipio,codigo_ibge,parâmetro,uf,
          `Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,
          `Total de inconsistentes`, `Total de Consistentes não detectados`, 
          `Total de parâmetros com MENOR_LQ`,
          `Total de Consistentes detectados Abaixo do VMP`,
-         `Total de Consistentes detectados Acima do VMP`,Total_Detectados ,
+         `Total de Consistentes detectados Acima do VMP`,Total_Detectados,prop1, prop2,
          all_of(cnaes_nitrato)
          ) |> 
   arrange(municipio)
@@ -231,7 +216,9 @@ tabela_nitrato <- dados_combinados |>
 View(tabela_nitrato)
 
 
-tabela_nitrato <-as.data.frame(tabela_nitrato)
+tabela_nitrato <-as.data.frame(tabela_nitrato) |> 
+  rename_with(~ ifelse(grepl("^[0-9]+$", .), paste0("cnae_", .), .))
+
 
 write_csv(tabela_nitrato, "planilha_nitrato_como_N.csv")
 
@@ -239,29 +226,16 @@ write_csv(tabela_nitrato, "planilha_nitrato_como_N.csv")
 
 # PARA CORRELAÇÃO Nitrato como N
 
-tabela_nitrato<-tabela_nitrato |> 
-  mutate(across(11:100, as.double))
+#tabela_nitrato<-tabela_nitrato |> 
+#  mutate(across(11:100, as.double))
 
 
 
-zero_sd_cols <- sapply(tabela_nitrato[, -c(1:3)], function(x) sd(x, na.rm = TRUE) == 0)
-zero_sd_cols  # Retorna TRUE para colunas com desvio padrão zero
+#zero_sd_cols <- sapply(tabela_nitrato[, -c(1:3)], function(x) sd(x, na.rm = TRUE) == 0)
+#zero_sd_cols  # Retorna TRUE para colunas com desvio padrão zero
 
 
-t1<-round(cor(tabela_nitrato[,-c(1:3,16)]), 5)
-View(t1)
-
-colnames(t1)[colnames(t1)=="Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ"] <-'Total de Testes'
-
-colnames(t1)[colnames(t1)=="Total de inconsistentes"] <-'Tot inconst'
-colnames(t1)[colnames(t1)=="Total de Consistentes não detectados"] <-'Tot cons n dec'
-colnames(t1)[colnames(t1)=="Total de parâmetros com MENOR_LQ"] <-'Tot par menor LQ'
-colnames(t1)[colnames(t1)=="Total de Consistentes detectados Abaixo do VMP"] <-'Tot cons dec AB VMP'
-colnames(t1)[colnames(t1)=="Total de Consistentes detectados Acima do VMP"] <-'Tot cons dec AC VMP'
-
-
-heatmaply(t1)
-
+#t1<-round(cor(tabela_nitrato[,-c(1:3,16)]), 5)
 
 
 ###### FILTRO PARA ACRILAMIDA ----
@@ -274,30 +248,18 @@ View(cnaes_acrilamida)
 
 tabela_acrilamida <- dados_combinados |> 
   filter(parâmetro == "Acrilamida") |> 
-  select(municipio,parâmetro,uf,
+  select(municipio,codigo_ibge,parâmetro,uf,
          `Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,
          `Total de inconsistentes`, `Total de Consistentes não detectados`, 
          `Total de parâmetros com MENOR_LQ`,
          `Total de Consistentes detectados Abaixo do VMP`,
-         `Total de Consistentes detectados Acima do VMP`,Total_Detectados ,
+         `Total de Consistentes detectados Acima do VMP`,Total_Detectados, prop1, prop2,
          all_of(cnaes_acrilamida)) |> arrange(municipio)
 
-View(tabela_acrilamida)
 
+tabela_acrilamida <-as.data.frame(tabela_acrilamida) |> 
+  rename_with(~ ifelse(grepl("^[0-9]+$", .), paste0("cnae_", .), .))
 
-tabela_acrilamida<-tabela_acrilamida |> 
-  mutate(across(11:19, as.double))
-
-tabela_acrilamida <-as.data.frame(tabela_acrilamida)
-
-
-zero_sd_cols <- sapply(tabela_acrilamida[, -c(1:3)], function(x) sd(x, na.rm = TRUE) == 0)
-zero_sd_cols  # Retorna TRUE para colunas com desvio padrão zero
-
-t2<-cor(tabela_acrilamida[,-c(1:3)])
-View(t2)
-
-heatmaply(t2)
 write_csv(tabela_acrilamida, "planilha_acrilamida.csv")
 
 
@@ -320,22 +282,206 @@ chisq.test(table(tabela_acrilamida$x,tabela_acrilamida$y ))
 prop.table(table(tabela_acrilamida$y,tabela_acrilamida$x ),2)
 
 table(tabela_acrilamida$y,tabela_acrilamida$x )
-#### TESTE PARA MATRIZ Dx#### TESTE PARA MATRIZ DE CORRELAÇÃO
+
+###### FILTRO PARA ANTIMÔNIO ----
+
+cnaes_antimonio <- extrair_cnaes(filtros_cnaes, "Antimônio")
+
+cnaes_antimonio <- sub("^0+","", cnaes_antimonio)
+
+View(cnaes_antimonio)
+
+tabela_antimonio <- dados_combinados |> 
+  filter(parâmetro == "Antimônio") |> 
+  select(municipio,codigo_ibge,parâmetro,uf,
+         `Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,
+         `Total de inconsistentes`, `Total de Consistentes não detectados`, 
+         `Total de parâmetros com MENOR_LQ`,
+         `Total de Consistentes detectados Abaixo do VMP`,
+         `Total de Consistentes detectados Acima do VMP`,Total_Detectados, prop1, prop2,
+         all_of(cnaes_antimonio)) |> arrange(municipio)
+
+
+tabela_antimonio  <-as.data.frame(tabela_antimonio ) |> 
+  rename_with(~ ifelse(grepl("^[0-9]+$", .), paste0("cnae_", .), .))
+
+write_csv(tabela_antimonio , "planilha_antimonio.csv")
+
+
+###### FILTRO PARA ARSÊNI0 ----
+
+cnaes_arsenio <- extrair_cnaes(filtros_cnaes, "Arsênio")
+
+cnaes_arsenio <- sub("^0+","", cnaes_arsenio)
+
+View(cnaes_arsenio)
+
+tabela_arsenio <- dados_combinados |> 
+  filter(parâmetro == "Arsênio") |> 
+  select(municipio,codigo_ibge,parâmetro,uf,
+         `Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,
+         `Total de inconsistentes`, `Total de Consistentes não detectados`, 
+         `Total de parâmetros com MENOR_LQ`,
+         `Total de Consistentes detectados Abaixo do VMP`,
+         `Total de Consistentes detectados Acima do VMP`,Total_Detectados, prop1, prop2,
+         all_of(cnaes_arsenio)) |> arrange(municipio)
+
+
+tabela_arsenio  <-as.data.frame(tabela_arsenio ) |> 
+  rename_with(~ ifelse(grepl("^[0-9]+$", .), paste0("cnae_", .), .))
+
+write_csv(tabela_arsenio , "planilha_arsenio.csv")
+
+
+###### FILTRO PARA BÁRIO ----
+
+cnaes_bario <- extrair_cnaes(filtros_cnaes, "Bário")
+
+cnaes_bario <- sub("^0+","", cnaes_bario)
+
+View(cnaes_bario)
+
+tabela_bario <- dados_combinados |> 
+  filter(parâmetro == "Bário") |> 
+  select(municipio,codigo_ibge,parâmetro,uf,
+         `Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,
+         `Total de inconsistentes`, `Total de Consistentes não detectados`, 
+         `Total de parâmetros com MENOR_LQ`,
+         `Total de Consistentes detectados Abaixo do VMP`,
+         `Total de Consistentes detectados Acima do VMP`,Total_Detectados, prop1, prop2,
+         all_of(cnaes_bario)) |> arrange(municipio)
+
+
+tabela_bario  <-as.data.frame(tabela_bario) |> 
+  rename_with(~ ifelse(grepl("^[0-9]+$", .), paste0("cnae_", .), .))
+
+write_csv(tabela_bario , "planilha_bario.csv")
+
+
+###### FILTRO PARA CÁDMIO ----
+
+cnaes_cadmio <- extrair_cnaes(filtros_cnaes, "Cádmio")
+
+cnaes_cadmio <- sub("^0+","", cnaes_cadmio)
+
+View(cnaes_cadmio)
+
+tabela_cadmio <- dados_combinados |> 
+  filter(parâmetro == "Cádmio") |> 
+  select(municipio,codigo_ibge,parâmetro,uf,
+         `Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,
+         `Total de inconsistentes`, `Total de Consistentes não detectados`, 
+         `Total de parâmetros com MENOR_LQ`,
+         `Total de Consistentes detectados Abaixo do VMP`,
+         `Total de Consistentes detectados Acima do VMP`,Total_Detectados, prop1, prop2,
+         all_of(cnaes_cadmio)) |> arrange(municipio)
+
+
+tabela_cadmio  <-as.data.frame(tabela_cadmio) |> 
+  rename_with(~ ifelse(grepl("^[0-9]+$", .), paste0("cnae_", .), .))
+
+write_csv(tabela_cadmio , "planilha_cadmio.csv")
+
+###### FILTRO PARA CHUMBO ----
+
+cnaes_chumbo <- extrair_cnaes(filtros_cnaes, "Chumbo")
+
+cnaes_chumbo <- sub("^0+","", cnaes_chumbo)
+
+View(cnaes_chumbo)
+
+tabela_chumbo <- dados_combinados |> 
+  filter(parâmetro == "Chumbo") |> 
+  select(municipio,codigo_ibge,parâmetro,uf,
+         `Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,
+         `Total de inconsistentes`, `Total de Consistentes não detectados`, 
+         `Total de parâmetros com MENOR_LQ`,
+         `Total de Consistentes detectados Abaixo do VMP`,
+         `Total de Consistentes detectados Acima do VMP`,Total_Detectados, prop1, prop2,
+         all_of(cnaes_chumbo)) |> arrange(municipio)
+
+
+tabela_chumbo  <-as.data.frame(tabela_chumbo) |> 
+  rename_with(~ ifelse(grepl("^[0-9]+$", .), paste0("cnae_", .), .))
+
+write_csv(tabela_chumbo , "planilha_chumbo.csv")
+
+###### FILTRO PARA CHUMBO ----
+
+cnaes_chumbo <- extrair_cnaes(filtros_cnaes, "Chumbo")
+
+cnaes_chumbo <- sub("^0+","", cnaes_chumbo)
+
+View(cnaes_chumbo)
+
+tabela_chumbo <- dados_combinados |> 
+  filter(parâmetro == "Chumbo") |> 
+  select(municipio,codigo_ibge,parâmetro,uf,
+         `Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,
+         `Total de inconsistentes`, `Total de Consistentes não detectados`, 
+         `Total de parâmetros com MENOR_LQ`,
+         `Total de Consistentes detectados Abaixo do VMP`,
+         `Total de Consistentes detectados Acima do VMP`,Total_Detectados, prop1, prop2,
+         all_of(cnaes_chumbo)) |> arrange(municipio)
+
+
+tabela_chumbo  <-as.data.frame(tabela_chumbo) |> 
+  rename_with(~ ifelse(grepl("^[0-9]+$", .), paste0("cnae_", .), .))
+
+write_csv(tabela_chumbo , "planilha_chumbo.csv")
+
+
+
+###### FILTRO PARA CROMO ----
+
+cnaes_cromo <- extrair_cnaes(filtros_cnaes, "Cromo")
+
+cnaes_cromo <- sub("^0+","", cnaes_cromo)
+
+View(cnaes_cromo)
+
+tabela_cromo <- dados_combinados |> 
+  filter(parâmetro == "Cromo") |> 
+  select(municipio,codigo_ibge,parâmetro,uf,
+         `Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,
+         `Total de inconsistentes`, `Total de Consistentes não detectados`, 
+         `Total de parâmetros com MENOR_LQ`,
+         `Total de Consistentes detectados Abaixo do VMP`,
+         `Total de Consistentes detectados Acima do VMP`,Total_Detectados, prop1, prop2,
+         all_of(cnaes_cromo)) |> arrange(municipio)
+
+
+tabela_cromo  <-as.data.frame(tabela_cromo) |> 
+  rename_with(~ ifelse(grepl("^[0-9]+$", .), paste0("cnae_", .), .))
+
+write_csv(tabela_cromo , "planilha_cromo.csv")
 
 
 
 
-#https://cran.r-project.org/web/packages/heatmaply/vignettes/heatmaply.html
+###### FILTRO PARA CROMO ----
+
+cnaes_cromo <- extrair_cnaes(filtros_cnaes, "Cromo")
+
+cnaes_cromo <- sub("^0+","", cnaes_cromo)
+
+View(cnaes_cromo)
+
+tabela_cromo <- dados_combinados |> 
+  filter(parâmetro == "Cromo") |> 
+  select(municipio,codigo_ibge,parâmetro,uf,
+         `Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,
+         `Total de inconsistentes`, `Total de Consistentes não detectados`, 
+         `Total de parâmetros com MENOR_LQ`,
+         `Total de Consistentes detectados Abaixo do VMP`,
+         `Total de Consistentes detectados Acima do VMP`,Total_Detectados, prop1, prop2,
+         all_of(cnaes_cromo)) |> arrange(municipio)
 
 
+tabela_cromo  <-as.data.frame(tabela_cromo) |> 
+  rename_with(~ ifelse(grepl("^[0-9]+$", .), paste0("cnae_", .), .))
 
-
-
-
-
-
-
-
+write_csv(tabela_cromo , "planilha_cromo.csv")
 
 
 
