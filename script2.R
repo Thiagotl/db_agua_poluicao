@@ -264,12 +264,29 @@ write_csv(tabela_acrilamida, "planilha_acrilamida.csv")
 
 tabela_acrilamida<-tabela_acrilamida |> 
   mutate(num_empresa = ifelse(cnae_2029100 > 0,1,0), # x
-         deteccao= ifelse(Total_Detectados >0,1,0))  # y
+         deteccao= ifelse(Total_Detectados > 0,1,0))  # y
 
 chisq.test(table(tabela_acrilamida$num_empresa,tabela_acrilamida$deteccao))
 prop.table(table(tabela_acrilamida$num_empresa,tabela_acrilamida$deteccao),2)
 
 table(tabela_acrilamida$num_empresa,tabela_acrilamida$deteccao)
+
+
+
+library(vcd)  
+tabela_contingencia <- table(tabela_acrilamida$num_empresa, tabela_acrilamida$deteccao)
+
+# tamanho do efeito
+v_cramer <- assocstats(tabela_contingencia)$cramer
+
+print(v_cramer)
+
+# # Ajustar a regressão logística
+# modelo_logit <- glm(deteccao ~ num_empresa, data = tabela_acrilamida, family = binomial)
+# 
+# # Resumo do modelo
+# summary(modelo_logit)
+
 
 ###### FILTRO PARA ANTIMÔNIO ----
 
