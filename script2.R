@@ -262,26 +262,14 @@ tabela_acrilamida <-as.data.frame(tabela_acrilamida) |>
 
 write_csv(tabela_acrilamida, "planilha_acrilamida.csv")
 
-
-hist(tabela_acrilamida$Total_Detectados)
-plot(tabela_acrilamida$`2029100`,tabela_acrilamida$Total_Detectados)
-
-cor.test(tabela_acrilamida$`2029100`,tabela_acrilamida$Total_Detectados, method = "kendall")
-
-
-table(tabela_acrilamida$`2029100`,tabela_acrilamida$Total_Detectados)
-
-prop.table(table(tabela_acrilamida$x,tabela_acrilamida$y ))
-
-
 tabela_acrilamida<-tabela_acrilamida |> 
-  mutate(y= ifelse(`2029100` > 0,1,0),
-         x= ifelse(Total_Detectados >0,1,0))
+  mutate(num_empresa = ifelse(cnae_2029100 > 0,1,0), # x
+         deteccao= ifelse(Total_Detectados >0,1,0))  # y
 
-chisq.test(table(tabela_acrilamida$x,tabela_acrilamida$y ))
-prop.table(table(tabela_acrilamida$y,tabela_acrilamida$x ),2)
+chisq.test(table(tabela_acrilamida$num_empresa,tabela_acrilamida$deteccao))
+prop.table(table(tabela_acrilamida$num_empresa,tabela_acrilamida$deteccao),2)
 
-table(tabela_acrilamida$y,tabela_acrilamida$x )
+table(tabela_acrilamida$num_empresa,tabela_acrilamida$deteccao)
 
 ###### FILTRO PARA ANTIMÔNIO ----
 
@@ -459,38 +447,83 @@ write_csv(tabela_cromo , "planilha_cromo.csv")
 
 
 
-###### FILTRO PARA CROMO ----
+###### FILTRO PARA COBRE ----
 
-cnaes_cromo <- extrair_cnaes(filtros_cnaes, "Cromo")
+cnaes_cobre <- extrair_cnaes(filtros_cnaes, "Cobre")
 
-cnaes_cromo <- sub("^0+","", cnaes_cromo)
+cnaes_cobre <- sub("^0+","", cnaes_cobre)
 
-View(cnaes_cromo)
+View(cnaes_cobre)
 
-tabela_cromo <- dados_combinados |> 
-  filter(parâmetro == "Cromo") |> 
+tabela_cobre <- dados_combinados |> 
+  filter(parâmetro == "Cobre") |> 
   select(municipio,codigo_ibge,parâmetro,uf,
          `Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,
          `Total de inconsistentes`, `Total de Consistentes não detectados`, 
          `Total de parâmetros com MENOR_LQ`,
          `Total de Consistentes detectados Abaixo do VMP`,
          `Total de Consistentes detectados Acima do VMP`,Total_Detectados, prop1, prop2,
-         all_of(cnaes_cromo)) |> arrange(municipio)
+         all_of(cnaes_cobre)) |> arrange(municipio)
 
 
-tabela_cromo  <-as.data.frame(tabela_cromo) |> 
+tabela_cobre  <-as.data.frame(tabela_cobre) |> 
   rename_with(~ ifelse(grepl("^[0-9]+$", .), paste0("cnae_", .), .))
 
-write_csv(tabela_cromo , "planilha_cromo.csv")
+write_csv(tabela_cobre , "planilha_cobre.csv")
 
 
 
 
 
+###### FILTRO PARA NÍQUEL ----
+
+cnaes_niquel <- extrair_cnaes(filtros_cnaes, "Níquel")
+
+cnaes_niquel <- sub("^0+","", cnaes_niquel)
+
+View(cnaes_niquel)
+
+tabela_niquel <- dados_combinados |> 
+  filter(parâmetro == "Níquel") |> 
+  select(municipio,codigo_ibge,parâmetro,uf,
+         `Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,
+         `Total de inconsistentes`, `Total de Consistentes não detectados`, 
+         `Total de parâmetros com MENOR_LQ`,
+         `Total de Consistentes detectados Abaixo do VMP`,
+         `Total de Consistentes detectados Acima do VMP`,Total_Detectados, prop1, prop2,
+         all_of(cnaes_niquel)) |> arrange(municipio)
+
+
+tabela_niquel  <-as.data.frame(tabela_niquel) |> 
+  rename_with(~ ifelse(grepl("^[0-9]+$", .), paste0("cnae_", .), .))
+
+write_csv(tabela_niquel , "planilha_niquel.csv")
 
 
 
+###### FILTRO PARA SELÊNIO ----
 
+cnaes_selenio <- extrair_cnaes(filtros_cnaes, "Selênio")
+
+cnaes_selenio <- sub("^0+","", cnaes_selenio)
+
+View(cnaes_selenio)
+
+tabela_selenio <- dados_combinados |> 
+  filter(parâmetro == "Selênio") |> 
+  select(municipio,codigo_ibge,parâmetro,uf,
+         `Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,
+         `Total de inconsistentes`, `Total de Consistentes não detectados`, 
+         `Total de parâmetros com MENOR_LQ`,
+         `Total de Consistentes detectados Abaixo do VMP`,
+         `Total de Consistentes detectados Acima do VMP`,Total_Detectados, prop1, prop2,
+         all_of(cnaes_selenio)) |> arrange(municipio)
+
+
+tabela_selenio  <-as.data.frame(tabela_selenio) |> 
+  rename_with(~ ifelse(grepl("^[0-9]+$", .), paste0("cnae_", .), .))
+
+write_csv(tabela_selenio , "planilha_selenio.csv")
 
 
 
