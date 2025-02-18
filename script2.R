@@ -267,7 +267,7 @@ tabela_acrilamida<-tabela_acrilamida |>
          deteccao= ifelse(Total_Detectados > 0,1,0))  # y
 
 chisq.test(table(tabela_acrilamida$num_empresa,tabela_acrilamida$deteccao))
-prop.table(table(tabela_acrilamida$num_empresa,tabela_acrilamida$deteccao),1)
+prop.table(table(tabela_acrilamida$deteccao,tabela_acrilamida$num_empresa),1)
 
 table(tabela_acrilamida$num_empresa,tabela_acrilamida$deteccao)
 
