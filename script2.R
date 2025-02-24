@@ -271,6 +271,7 @@ prop.table(table(tabela_acrilamida$deteccao,tabela_acrilamida$num_empresa),1)
 
 table(tabela_acrilamida$num_empresa,tabela_acrilamida$deteccao)
 
+table(tabela_acrilamida$deteccao, tabela_acrilamida$num_empresa)
 
 
 library(vcd)  
