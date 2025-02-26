@@ -274,6 +274,9 @@ table(tabela_acrilamida$num_empresa,tabela_acrilamida$deteccao)
 table(tabela_acrilamida$deteccao, tabela_acrilamida$num_empresa)
 plot(tabela_acrilamida$`Total de Consistentes detectados Acima do VMP`, tabela_acrilamida$cnae_2029100)
 
+plot(tabela_acrilamida$cnae_2029100,tabela_acrilamida$Total_Detectados)
+
+
 library(vcd)  
 tabela_contingencia <- table(tabela_acrilamida$num_empresa, tabela_acrilamida$deteccao)
 
