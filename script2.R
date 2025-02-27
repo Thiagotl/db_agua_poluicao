@@ -65,7 +65,36 @@ dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados |>
          prop1 = prop1,
          prop2 = prop2)  
 
+
 View(dados_sisagua_p7_agrupados)
+
+
+sum(prop1>=prop2, na.rm = T)
+
+a=(dados_combinados$prop1 == 0)
+b=(dados_combinados$prop2 == 0)
+
+sum(a==b, na.rm = T)
+
+sum(is.na(a)==T)
+
+c=(dados_sisagua_p7_agrupados |> filter(is.na(prop1) == F ))
+
+length(table(dados_combinados$codigo_ibge))
+
+length(table(dados_combinados$uf))
+
+c=(dados_sisagua_p7_agrupados |> filter(is.na(prop1) == F))
+
+
+dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados |> 
+  mutate(consitente = ifelse(`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ` == `Total de inconsistentes`,0,1))
+
+View(dados_sisagua_p7_agrupados)  
+
+
+
+
 # dados_sisagua_p7_agrupados<- dados_sisagua_p7_agrupados |> 
 #     group_by(codigo_ibge, parâmetro, municipio, uf) |> 
 #     summarise(across(where(is.numeric), sum, na.rm = TRUE), .groups = "drop")
@@ -76,7 +105,7 @@ dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados |>
   mutate(codigo_ibge = ifelse(uf == "DF", 530010, codigo_ibge))
 
 
-
+c <-
 
 View(dados_sisagua_p7_agrupados)
 write.csv(dados_sisagua_p7_agrupados, "dados_filtrados.csv", row.names = FALSE)
@@ -144,6 +173,8 @@ dim(table(dados_combinados$municipio)) # 2782
 
 
 write_csv(dados_combinados, "dados_combinado.csv")
+
+sum(dados_combinados$prop2 == 0, na.rm = T)
 
 
 # uma alteracao para os dados combinados
