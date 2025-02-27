@@ -1,6 +1,7 @@
 library(readr)
 library(stringi)
 library(heatmaply)
+library(openxlsx)
 
 # link importante - https://www.gov.br/receitafederal/dados/municipios.csv
 # link importante - https://www.ibge.gov.br/explica/codigos-dos-municipios.php
@@ -88,7 +89,7 @@ c=(dados_sisagua_p7_agrupados |> filter(is.na(prop1) == F))
 
 
 dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados |> 
-  mutate(consitente = ifelse(`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ` == `Total de inconsistentes`,0,1))
+  mutate(consistente = ifelse(`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ` == `Total de inconsistentes`,0,1))
 
 View(dados_sisagua_p7_agrupados)  
 
@@ -148,6 +149,8 @@ str(dados_sisagua_p7_agrupados$codigo_ibge)
 str(df_cnaes_primarios$codigo_ibge)
 
 
+# DADOS SISAGUA AGRUPADOS SEM  
+
 # REMOVER AS TRÊS CIDADES SEM CÓDIGO IBGE. - PROBLEMA FOI RESOLVIDO
 # municipios_para_remover <- c("GRANJEIRO", "SANTA FILOMENA", "SOLIDAO")
 # 
@@ -176,11 +179,19 @@ write_csv(dados_combinados, "dados_combinado.csv")
 
 sum(dados_combinados$prop2 == 0, na.rm = T)
 
+write.xlsx(dados_combinados, file = "dados_combinado.xlsx")
 
 # uma alteracao para os dados combinados
 
 colnames(dados_combinados) <- as.character(colnames(dados_combinados))
 
+
+#### PLANILHA DADOS COMBINADOS SEM TESTES INCONSISTENTES ---- 
+
+dados_sisagua_p7_agrupados_s_inconsistentes <- dados_sisagua_p7_agrupados |> 
+  filter(dados_sisagua_p7_agrupados$consitente == 1)
+
+view(dados_sisagua_p7_agrupados_s_inconsistentes)
 ####### TESTANDO ALGUNS FILTROS #####
 
 # Paramentros - Acrilamida, Antimônio, Arsênio, Bário, Cádmio, Chumbo, Cromo, 
@@ -299,7 +310,7 @@ tabela_acrilamida <- dados_combinados |>
          `Total de inconsistentes`, `Total de Consistentes não detectados`, 
          `Total de parâmetros com MENOR_LQ`,
          `Total de Consistentes detectados Abaixo do VMP`,
-         `Total de Consistentes detectados Acima do VMP`,Total_Detectados, prop1, prop2,
+         `Total de Consistentes detectados Acima do VMP`,Total_Detectados,consistente ,prop1, prop2,
          all_of(cnaes_acrilamida)) |> arrange(municipio)
 
 
