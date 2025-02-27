@@ -18,42 +18,57 @@ dim(table(dados_sisagua_p7$municipio)) # sao 2782
 
 attach(dados_sisagua_p7)
 
-# GRUPAR O DATASET DOS DADOS DO SISAGUA POR MUNICIPIO E PARAMETRO
+colnames(dados_sisagua_p7)
 
-# PROPORCAO DE (ABAIXO DO VMP+ACIMA DO VMP) / CONSISTENTE
+dados_sisagua_p7<-as.data.frame(dados_sisagua_p7)
+##########################
 
-prop1 = (`Total de Consistentes detectados Abaixo do VMP` + 
-           `Total de Consistentes detectados Acima do VMP`)/(`Total de Consistentes não detectados`+
-                                                               `Total de parâmetros com MENOR_LQ`+
-                                                               `Total de Consistentes detectados Abaixo do VMP`+
-                                                               `Total de Consistentes detectados Acima do VMP`)
+dados_sisagua_p7_agrupados<- dados_sisagua_p7 |> 
+  group_by(codigo_ibge,parâmetro,municipio,uf) |> 
+  summarise(across(where(is.numeric), sum, na.rm = TRUE), .groups = "drop")
+View(dados_sisagua_p7_agrupados)
 
-prop1<-round(prop1, 2)
-# PROPORCAO DE  ABAIXO DO VMP / CONSISTENTE
-prop2= `Total de Consistentes detectados Abaixo do VMP`/(`Total de Consistentes não detectados`+
-           `Total de parâmetros com MENOR_LQ`+
-           `Total de Consistentes detectados Abaixo do VMP`+
-           `Total de Consistentes detectados Acima do VMP`)
-
-prop2<-round(prop2, 2)
-
-dados_sisagua_p7_agrupados <- dados_sisagua_p7 |>
+dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados |>
   select(municipio, parâmetro, uf, codigo_ibge, 
          `Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,
          `Total de inconsistentes`, 
          `Total de Consistentes não detectados`,
          `Total de parâmetros com MENOR_LQ`, 
          `Total de Consistentes detectados Abaixo do VMP`,
-         `Total de Consistentes detectados Acima do VMP`) |> 
+         `Total de Consistentes detectados Acima do VMP`)
+
+# GRUPAR O DATASET DOS DADOS DO SISAGUA POR MUNICIPIO E PARAMETRO
+
+# PROPORCAO DE (ABAIXO DO VMP+ACIMA DO VMP) / CONSISTENTE
+
+prop1 = (dados_sisagua_p7_agrupados$`Total de Consistentes detectados Abaixo do VMP` +
+           dados_sisagua_p7_agrupados$`Total de Consistentes detectados Acima do VMP`)/(dados_sisagua_p7_agrupados$`Total de Consistentes não detectados`+
+                                                                                          dados_sisagua_p7_agrupados$`Total de parâmetros com MENOR_LQ`+
+                                                                                          dados_sisagua_p7_agrupados$`Total de Consistentes detectados Abaixo do VMP`+
+                                                                                          dados_sisagua_p7_agrupados$`Total de Consistentes detectados Acima do VMP`)
+
+prop1
+
+prop1<-round(prop1, 4)
+
+# PROPORCAO DE  ABAIXO DO VMP / CONSISTENTE
+prop2= dados_sisagua_p7_agrupados$`Total de Consistentes detectados Abaixo do VMP`/(dados_sisagua_p7_agrupados$`Total de Consistentes não detectados`+
+                                                                                      dados_sisagua_p7_agrupados$`Total de parâmetros com MENOR_LQ`+
+                                                                                      dados_sisagua_p7_agrupados$`Total de Consistentes detectados Abaixo do VMP`+
+                                                                                      dados_sisagua_p7_agrupados$`Total de Consistentes detectados Acima do VMP`)
+
+prop2<-round(prop2, 4)
+
+dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados |>
   mutate(Total_Detectados = `Total de Consistentes detectados Abaixo do VMP` + 
            `Total de Consistentes detectados Acima do VMP`,
          prop1 = prop1,
-         prop2 = prop2) 
+         prop2 = prop2)  
 
-
-dados_sisagua_p7_agrupados<- dados_sisagua_p7_agrupados |> 
-    group_by(codigo_ibge, parâmetro, municipio, uf) |> 
-    summarise(across(where(is.numeric), sum, na.rm = TRUE), .groups = "drop")
+View(dados_sisagua_p7_agrupados)
+# dados_sisagua_p7_agrupados<- dados_sisagua_p7_agrupados |> 
+#     group_by(codigo_ibge, parâmetro, municipio, uf) |> 
+#     summarise(across(where(is.numeric), sum, na.rm = TRUE), .groups = "drop")
 
 dim(table(dados_sisagua_p7_agrupados$municipio)) #2782
 
