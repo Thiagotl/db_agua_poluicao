@@ -326,13 +326,14 @@ tabela_acrilamida<-tabela_acrilamida |>
 chisq.test(table(tabela_acrilamida$num_empresa,tabela_acrilamida$deteccao))
 prop.table(table(tabela_acrilamida$deteccao,tabela_acrilamida$num_empresa),1)
 
-table(tabela_acrilamida$num_empresa,tabela_acrilamida$deteccao)
+table(tabela_acrilamida$deteccao,tabela_acrilamida$num_empresa)
 
 table(tabela_acrilamida$deteccao, tabela_acrilamida$num_empresa)
 plot(tabela_acrilamida$`Total de Consistentes detectados Acima do VMP`, tabela_acrilamida$cnae_2029100)
 
 plot(tabela_acrilamida$cnae_2029100,tabela_acrilamida$Total_Detectados)
 
+table(sum(tabela_acrilamida$consistente == 0))
 
 library(vcd)  
 tabela_contingencia <- table(tabela_acrilamida$num_empresa, tabela_acrilamida$deteccao)
