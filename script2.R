@@ -1,6 +1,5 @@
 library(readr)
 library(stringi)
-library(heatmaply)
 library(openxlsx)
 
 # link importante - https://www.gov.br/receitafederal/dados/municipios.csv
@@ -8,7 +7,7 @@ library(openxlsx)
 # link importante - https://cbm.nfiss.com.br/Lista_SB.php?Cadastro=116&Campo=ID7_IBGE_CTBT
 
 dados_sisagua_p7 <- read_csv("planilha7_pivotresult_sisagua_25_out.csv") # planilha 8s
-View(dados_sisagua_p7)
+#View(dados_sisagua_p7)
 
 colnames(dados_sisagua_p7)[colnames(dados_sisagua_p7)=="código_ibge"] <-'codigo_ibge'
 
@@ -42,50 +41,57 @@ dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados |>
 
 # PROPORCAO DE (ABAIXO DO VMP+ACIMA DO VMP) / CONSISTENTE
 
-prop1 = (dados_sisagua_p7_agrupados$`Total de Consistentes detectados Abaixo do VMP` +
-           dados_sisagua_p7_agrupados$`Total de Consistentes detectados Acima do VMP`)/(dados_sisagua_p7_agrupados$`Total de Consistentes não detectados`+
-                                                                                          dados_sisagua_p7_agrupados$`Total de parâmetros com MENOR_LQ`+
-                                                                                          dados_sisagua_p7_agrupados$`Total de Consistentes detectados Abaixo do VMP`+
-                                                                                          dados_sisagua_p7_agrupados$`Total de Consistentes detectados Acima do VMP`)
-
-prop1
-
-prop1<-round(prop1, 4)
+# prop1 = (dados_sisagua_p7_agrupados$`Total de Consistentes detectados Abaixo do VMP` +
+#            dados_sisagua_p7_agrupados$`Total de Consistentes detectados Acima do VMP`)/(dados_sisagua_p7_agrupados$`Total de Consistentes não detectados`+
+#                                                                                           dados_sisagua_p7_agrupados$`Total de parâmetros com MENOR_LQ`+
+#                                                                                           dados_sisagua_p7_agrupados$`Total de Consistentes detectados Abaixo do VMP`+
+#                                                                                           dados_sisagua_p7_agrupados$`Total de Consistentes detectados Acima do VMP`)
+# 
+# prop1
+# 
+# prop1<-round(prop1, 4)
 
 # PROPORCAO DE  ABAIXO DO VMP / CONSISTENTE
-prop2= dados_sisagua_p7_agrupados$`Total de Consistentes detectados Abaixo do VMP`/(dados_sisagua_p7_agrupados$`Total de Consistentes não detectados`+
-                                                                                      dados_sisagua_p7_agrupados$`Total de parâmetros com MENOR_LQ`+
-                                                                                      dados_sisagua_p7_agrupados$`Total de Consistentes detectados Abaixo do VMP`+
-                                                                                      dados_sisagua_p7_agrupados$`Total de Consistentes detectados Acima do VMP`)
-
-prop2<-round(prop2, 4)
+# prop2= dados_sisagua_p7_agrupados$`Total de Consistentes detectados Acima do VMP`/(dados_sisagua_p7_agrupados$`Total de Consistentes não detectados`+
+#                                                                                       dados_sisagua_p7_agrupados$`Total de parâmetros com MENOR_LQ`+
+#                                                                                       dados_sisagua_p7_agrupados$`Total de Consistentes detectados Abaixo do VMP`+
+#                                                                                       dados_sisagua_p7_agrupados$`Total de Consistentes detectados Acima do VMP`)
+# 
+# prop2<-round(prop2, 4)
 
 dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados |>
   mutate(Total_Detectados = `Total de Consistentes detectados Abaixo do VMP` + 
            `Total de Consistentes detectados Acima do VMP`,
-         prop1 = prop1,
-         prop2 = prop2)  
+         prop1 = (dados_sisagua_p7_agrupados$`Total de Consistentes detectados Abaixo do VMP` +
+                    dados_sisagua_p7_agrupados$`Total de Consistentes detectados Acima do VMP`)/(dados_sisagua_p7_agrupados$`Total de Consistentes não detectados`+
+                                                                                                   dados_sisagua_p7_agrupados$`Total de parâmetros com MENOR_LQ`+
+                                                                                                   dados_sisagua_p7_agrupados$`Total de Consistentes detectados Abaixo do VMP`+
+                                                                                                   dados_sisagua_p7_agrupados$`Total de Consistentes detectados Acima do VMP`),
+         prop2 = dados_sisagua_p7_agrupados$`Total de Consistentes detectados Acima do VMP`/(dados_sisagua_p7_agrupados$`Total de Consistentes não detectados`+
+                                                                                               dados_sisagua_p7_agrupados$`Total de parâmetros com MENOR_LQ`+
+                                                                                               dados_sisagua_p7_agrupados$`Total de Consistentes detectados Abaixo do VMP`+
+                                                                                               dados_sisagua_p7_agrupados$`Total de Consistentes detectados Acima do VMP`))  
 
 
-View(dados_sisagua_p7_agrupados)
-
-
-sum(prop1>=prop2, na.rm = T)
-
-a=(dados_combinados$prop1 == 0)
-b=(dados_combinados$prop2 == 0)
-
-sum(a==b, na.rm = T)
-
-sum(is.na(a)==T)
-
-c=(dados_sisagua_p7_agrupados |> filter(is.na(prop1) == F ))
-
-length(table(dados_combinados$codigo_ibge))
-
-length(table(dados_combinados$uf))
-
-c=(dados_sisagua_p7_agrupados |> filter(is.na(prop1) == F))
+# View(dados_sisagua_p7_agrupados)
+# 
+# 
+# sum(prop1>=prop2, na.rm = T)
+# 
+# a=(dados_combinados$prop1 == 0)
+# b=(dados_combinados$prop2 == 0)
+# 
+# sum(a==b, na.rm = T)
+# 
+# sum(is.na(a)==T)
+# 
+# c=(dados_sisagua_p7_agrupados |> filter(is.na(prop1) == F ))
+# 
+# length(table(dados_combinados$codigo_ibge))
+# 
+# length(table(dados_combinados$uf))
+# 
+# c=(dados_sisagua_p7_agrupados |> filter(is.na(prop1) == F))
 
 
 dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados |> 
@@ -106,7 +112,7 @@ dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados |>
   mutate(codigo_ibge = ifelse(uf == "DF", 530010, codigo_ibge))
 
 
-c <-
+
 
 View(dados_sisagua_p7_agrupados)
 write.csv(dados_sisagua_p7_agrupados, "dados_filtrados.csv", row.names = FALSE)
@@ -176,6 +182,7 @@ dim(table(dados_combinados$municipio)) # 2782
 
 
 write_csv(dados_combinados, "dados_combinado.csv")
+
 
 sum(dados_combinados$prop2 == 0, na.rm = T)
 
@@ -603,14 +610,3 @@ tabela_selenio  <-as.data.frame(tabela_selenio) |>
   rename_with(~ ifelse(grepl("^[0-9]+$", .), paste0("cnae_", .), .))
 
 write_csv(tabela_selenio , "planilha_selenio.csv")
-
-
-
-
-
-
-
-
-
-
-
