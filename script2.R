@@ -97,7 +97,7 @@ dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados |>
 dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados |> 
   mutate(consistente = ifelse(`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ` == `Total de inconsistentes`,0,1))
 
-View(dados_sisagua_p7_agrupados)  
+#View(dados_sisagua_p7_agrupados)  
 
 
 
@@ -114,14 +114,14 @@ dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados |>
 
 
 
-View(dados_sisagua_p7_agrupados)
-write.csv(dados_sisagua_p7_agrupados, "dados_filtrados.csv", row.names = FALSE)
+# View(dados_sisagua_p7_agrupados)
+# write.csv(dados_sisagua_p7_agrupados, "dados_filtrados.csv", row.names = FALSE)
 
 
-#library(arrow)
-#write_feather(dados_sisagua_p7_agrupados, "dados_filtrados.feather")
-# objeto_filtrado <- read_feather("dados_sisagua_p7_agrupados.feather")
-
+# library(arrow)
+# write_feather(dados_sisagua_p7_agrupados, "dados_filtrados.feather")
+# objeto_filtrado <- read_feather("dados_filtrados.feather")
+# View(objeto_filtrado)
 
 # AJUSTE PARA MUNICIPIOS - TODOS EM CAIXA ALTA E SEM ACENTO
 
@@ -181,12 +181,14 @@ View(dados_combinados)
 dim(table(dados_combinados$municipio)) # 2782
 
 
-write_csv(dados_combinados, "dados_combinado.csv")
+# write_csv(dados_combinados, "dados_combinado.csv")
+# write_feather(dados_combinados, "dados_combinado.feather")
+# 
+# write_parquet(dados_combinados, "dados_combinado.parquet")
 
+#sum(dados_combinados$prop2 == 0, na.rm = T)
 
-sum(dados_combinados$prop2 == 0, na.rm = T)
-
-write.xlsx(dados_combinados, file = "dados_combinado.xlsx")
+#write.xlsx(dados_combinados, file = "dados_combinado.xlsx")
 
 # uma alteracao para os dados combinados
 
@@ -196,7 +198,7 @@ colnames(dados_combinados) <- as.character(colnames(dados_combinados))
 #### PLANILHA DADOS COMBINADOS SEM TESTES INCONSISTENTES ---- 
 
 dados_sisagua_p7_agrupados_s_inconsistentes <- dados_sisagua_p7_agrupados |> 
-  filter(dados_sisagua_p7_agrupados$consitente == 1)
+  filter(dados_sisagua_p7_agrupados$consistente == 1)
 
 view(dados_sisagua_p7_agrupados_s_inconsistentes)
 ####### TESTANDO ALGUNS FILTROS #####
@@ -428,7 +430,7 @@ tabela_bario <- dados_combinados |>
 
 tabela_bario  <-as.data.frame(tabela_bario) |> 
   rename_with(~ ifelse(grepl("^[0-9]+$", .), paste0("cnae_", .), .))
-
+View(tabela_bario)
 write_csv(tabela_bario , "planilha_bario.csv")
 
 
@@ -456,29 +458,6 @@ tabela_cadmio  <-as.data.frame(tabela_cadmio) |>
 
 write_csv(tabela_cadmio , "planilha_cadmio.csv")
 
-###### FILTRO PARA CHUMBO ----
-
-cnaes_chumbo <- extrair_cnaes(filtros_cnaes, "Chumbo")
-
-cnaes_chumbo <- sub("^0+","", cnaes_chumbo)
-
-View(cnaes_chumbo)
-
-tabela_chumbo <- dados_combinados |> 
-  filter(parâmetro == "Chumbo") |> 
-  select(municipio,codigo_ibge,parâmetro,uf,
-         `Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,
-         `Total de inconsistentes`, `Total de Consistentes não detectados`, 
-         `Total de parâmetros com MENOR_LQ`,
-         `Total de Consistentes detectados Abaixo do VMP`,
-         `Total de Consistentes detectados Acima do VMP`,Total_Detectados, prop1, prop2,
-         all_of(cnaes_chumbo)) |> arrange(municipio)
-
-
-tabela_chumbo  <-as.data.frame(tabela_chumbo) |> 
-  rename_with(~ ifelse(grepl("^[0-9]+$", .), paste0("cnae_", .), .))
-
-write_csv(tabela_chumbo , "planilha_chumbo.csv")
 
 ###### FILTRO PARA CHUMBO ----
 
@@ -555,6 +534,7 @@ tabela_cobre <- dados_combinados |>
 tabela_cobre  <-as.data.frame(tabela_cobre) |> 
   rename_with(~ ifelse(grepl("^[0-9]+$", .), paste0("cnae_", .), .))
 
+View(tabela_cobre)
 write_csv(tabela_cobre , "planilha_cobre.csv")
 
 
