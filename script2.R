@@ -41,23 +41,8 @@ dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados |>
 
 # PROPORCAO DE (ABAIXO DO VMP+ACIMA DO VMP) / CONSISTENTE
 
-# prop1 = (dados_sisagua_p7_agrupados$`Total de Consistentes detectados Abaixo do VMP` +
-#            dados_sisagua_p7_agrupados$`Total de Consistentes detectados Acima do VMP`)/(dados_sisagua_p7_agrupados$`Total de Consistentes não detectados`+
-#                                                                                           dados_sisagua_p7_agrupados$`Total de parâmetros com MENOR_LQ`+
-#                                                                                           dados_sisagua_p7_agrupados$`Total de Consistentes detectados Abaixo do VMP`+
-#                                                                                           dados_sisagua_p7_agrupados$`Total de Consistentes detectados Acima do VMP`)
-# 
-# prop1
-# 
-# prop1<-round(prop1, 4)
-
 # PROPORCAO DE  ABAIXO DO VMP / CONSISTENTE
-# prop2= dados_sisagua_p7_agrupados$`Total de Consistentes detectados Acima do VMP`/(dados_sisagua_p7_agrupados$`Total de Consistentes não detectados`+
-#                                                                                       dados_sisagua_p7_agrupados$`Total de parâmetros com MENOR_LQ`+
-#                                                                                       dados_sisagua_p7_agrupados$`Total de Consistentes detectados Abaixo do VMP`+
-#                                                                                       dados_sisagua_p7_agrupados$`Total de Consistentes detectados Acima do VMP`)
-# 
-# prop2<-round(prop2, 4)
+
 
 dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados |>
   mutate(Total_Detectados = `Total de Consistentes detectados Abaixo do VMP` + 
@@ -73,38 +58,14 @@ dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados |>
                                                                                                dados_sisagua_p7_agrupados$`Total de Consistentes detectados Acima do VMP`))  
 
 
-# View(dados_sisagua_p7_agrupados)
-# 
-# 
-# sum(prop1>=prop2, na.rm = T)
-# 
-# a=(dados_combinados$prop1 == 0)
-# b=(dados_combinados$prop2 == 0)
-# 
-# sum(a==b, na.rm = T)
-# 
-# sum(is.na(a)==T)
-# 
-# c=(dados_sisagua_p7_agrupados |> filter(is.na(prop1) == F ))
-# 
-# length(table(dados_combinados$codigo_ibge))
-# 
-# length(table(dados_combinados$uf))
-# 
-# c=(dados_sisagua_p7_agrupados |> filter(is.na(prop1) == F))
+
+
 
 
 dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados |> 
   mutate(consistente = ifelse(`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ` == `Total de inconsistentes`,0,1))
 
-#View(dados_sisagua_p7_agrupados)  
 
-
-
-
-# dados_sisagua_p7_agrupados<- dados_sisagua_p7_agrupados |> 
-#     group_by(codigo_ibge, parâmetro, municipio, uf) |> 
-#     summarise(across(where(is.numeric), sum, na.rm = TRUE), .groups = "drop")
 
 dim(table(dados_sisagua_p7_agrupados$municipio)) #2782
 
@@ -219,48 +180,6 @@ extrair_cnaes <- function(df, parametro){
 #cnaes_nitrato <- sub("^0+", "", cnaes_nitrato) # colocar na funcao
 
 
-
-
-# filtor cnaes - Cádmio
-
-cnaes_cadmio<-filtros_cnaes |> 
-  filter(Parâmetro == "Cádmio") |> 
-  select(CNAE)
-
-# filtor cnaes - Chumbo
-
-cnaes_chumbo<-filtros_cnaes |> 
-  filter(Parâmetro == "Chumbo") |> 
-  select(CNAE)
-
-# filtor cnaes - Cromo
-
-cnaes_cromo<-filtros_cnaes |> 
-  filter(Parâmetro == "Cromo") |> 
-  select(CNAE)
-
-
-# filtor cnaes - Cobre
-
-cnaes_cobre<-filtros_cnaes |> 
-  filter(Parâmetro == "Cobre") |> 
-  select(CNAE)
-
-# filtor cnaes - Níquel
-
-cnaes_niquel<-filtros_cnaes |> 
-  filter(Parâmetro == "Níquel") |> 
-  select(CNAE)
-
-# filtro cnaes - Selênio 
-cnaes_selenio<-filtros_cnaes |> 
-  filter(Parâmetro == "Selênio") |> 
-  select(CNAE)
-
-
-# testas depois
-
-
 ###### FILTRO PARA NITRATO (COMO N) ----
 
 cnaes_nitrato<-extrair_cnaes(filtros_cnaes, "Nitrato (como N)")
@@ -287,22 +206,6 @@ tabela_nitrato <-as.data.frame(tabela_nitrato) |>
 
 
 write_csv(tabela_nitrato, "planilha_nitrato_como_N.csv")
-
-
-
-# PARA CORRELAÇÃO Nitrato como N
-
-#tabela_nitrato<-tabela_nitrato |> 
-#  mutate(across(11:100, as.double))
-
-
-
-#zero_sd_cols <- sapply(tabela_nitrato[, -c(1:3)], function(x) sd(x, na.rm = TRUE) == 0)
-#zero_sd_cols  # Retorna TRUE para colunas com desvio padrão zero
-
-
-#t1<-round(cor(tabela_nitrato[,-c(1:3,16)]), 5)
-
 
 ###### FILTRO PARA ACRILAMIDA ----
 
