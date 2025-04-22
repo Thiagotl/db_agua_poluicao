@@ -216,7 +216,7 @@ anos_df <- data.frame(ano = 2014:2023)
 # Função para expandir situação para todos os anos de interesse
 expandir_situacao <- function(df_emp) {
   anos_interesse <- anos_df$ano
-  
+
   df_expandido <- df_emp |>
     select(cnpj_completo, código_ibge, ano_ini_atividade, ano, situacao_cadastral_desc) |>
     filter(!is.na(ano)) |>
@@ -269,7 +269,7 @@ lista_municipios <- empresas_filtradas_todos_cnaes |>
     # Pivotar
     df_empresas_largo <- df_expandido |>
       pivot_wider(
-        id_cols = c(ano, código_ibge),
+        id_cols = c(ano,código_ibge),
         names_from = cnpj_completo,
         values_from = situacao_cadastral_desc,
         names_prefix = "cnpj_",
