@@ -1,5 +1,3 @@
-# AQUI EU JUNTEI AS INFORMAÇÕES DAS EMPRESAS ATIVAS NO PERIODO DA PESQUISA DO SISAGUA
-
 library(tidyverse)
 library(readxl)
 library(lubridate)
@@ -47,14 +45,14 @@ empresas_filtradas_todos_cnaes <- empresas_filtradas_todos_cnaes |>
   mutate(código_ibge = as.double(código_ibge))
 
 
-  
+
 normalizar_nome <- function(nome) {
   nome_sem_acentos <- stringi::stri_trans_general(nome, "Latin-ASCII")
   nome_sem_espacos <- gsub(" ", "_", nome_sem_acentos)
   nome_limpo <- gsub("[^A-Za-z0-9_]", "", nome_sem_espacos)
   return(nome_limpo)
 }
-  
+
 lista_municipios <- empresas_filtradas_todos_cnaes |>
   group_by(código_ibge) |>
   group_split() |>
@@ -72,6 +70,7 @@ lista_municipios <- empresas_filtradas_todos_cnaes |>
         uf,
         situacao_cadastral_desc,
         ano
+        
       )  |> 
       pivot_wider(
         names_from = cnpj_completo,
@@ -86,7 +85,7 @@ lista_municipios <- empresas_filtradas_todos_cnaes |>
 
 # Exportar para Excel com múltiplas abas
 write_xlsx(lista_municipios, "municipios_cnpj_arsenio.xlsx")
-  
+
 
 
 #### juntar tudo -----
@@ -161,12 +160,96 @@ expandir_situacao <- function(df_emp) {
     group_by(cnpj_completo) |>
     mutate(
       situacao_cadastral_desc = ifelse(ano < ano_ini_atividade, NA, situacao_cadastral_desc),
-      situacao_cadastral_desc = zoo::na.locf(situacao_cadastral_desc, na.rm = FALSE)
+      situacao_cadastral_desc = zoo::na.locf(situacao_cadastral_desc, na.rm = FALSE),
     ) |>
     ungroup()
   
   return(df_expandido)
 }
+
+# Aplica para cada município
+lista_municipios <- empresas_filtradas_todos_cnaes |>
+  group_by(código_ibge) |>
+  group_split() |>
+  map(function(df_empresas) {
+    codigo <- unique(df_empresas$código_ibge)
+    nome <- unique(df_empresas$municipio_nome)
+    nome_limpo <- normalizar_nome(nome)
+    aba <- paste0("municipio_", codigo, "_", nome_limpo)
+    
+    df_arsenio <- municipios_teste_arsenio |>
+      filter(código_ibge == codigo)
+    
+    # Expandir situação para todos os anos
+    df_expandido <- expandir_situacao(df_empresas)
+    
+    # Pivotar
+    df_empresas_largo <- df_expandido |>
+      pivot_wider(
+        id_cols = c(ano, código_ibge),
+        names_from = cnpj_completo,
+        values_from = situacao_cadastral_desc,
+        names_prefix = "cnpj_",
+        values_fill = NA
+      )
+    
+    # Juntar com dados de arsênio
+    df_final <- left_join(df_arsenio, df_empresas_largo, by = c("código_ibge", "ano"))
+    
+    setNames(list(df_final), aba)
+  }) |>
+  flatten()
+
+
+# Salvar no Excel
+write_xlsx(lista_municipios, "municipios_join_cnpj_arsenio_completos_teste2.xlsx")
+
+
+###############
+# TENTATIVAS 
+
+
+
+# Criar um data frame com os anos de interesse
+anos_df <- data.frame(ano = 2014:2023)
+
+# Função para expandir situação para todos os anos de interesse
+expandir_situacao <- function(df_emp) {
+  anos_interesse <- anos_df$ano
+  
+  df_expandido <- df_emp |>
+    select(cnpj_completo, código_ibge, ano_ini_atividade, ano, situacao_cadastral_desc) |>
+    filter(!is.na(ano)) |>
+    complete(
+      ano = anos_interesse,
+      nesting(cnpj_completo, código_ibge, ano_ini_atividade),
+      fill = list(situacao_cadastral_desc = NA)
+    ) |>
+    arrange(cnpj_completo, ano) |>
+    group_by(cnpj_completo) |>
+    mutate(
+      # 1. Preenche para frente
+      situacao_cadastral_desc = zoo::na.locf(situacao_cadastral_desc, na.rm = FALSE),
+      # 2. Remove qualquer status antes do início da empresa
+      situacao_cadastral_desc = ifelse(ano < ano_ini_atividade, NA, situacao_cadastral_desc)
+    ) |>
+    # 3. Preenche NAs restantes (anteriores ao primeiro status conhecido) como "ATIVA"
+    group_by(cnpj_completo) |>
+    mutate(
+      primeira_situacao_ano = min(ano[!is.na(situacao_cadastral_desc)], na.rm = TRUE),
+      situacao_cadastral_desc = ifelse(
+        is.na(situacao_cadastral_desc) & ano >= ano_ini_atividade & ano < primeira_situacao_ano,
+        "ATIVA",
+        situacao_cadastral_desc
+      )
+    ) |>
+    select(-primeira_situacao_ano) |>
+    ungroup()
+  
+  return(df_expandido)
+}
+
+
 # Aplica para cada município
 lista_municipios <- empresas_filtradas_todos_cnaes |>
   group_by(código_ibge) |>
@@ -201,13 +284,10 @@ lista_municipios <- empresas_filtradas_todos_cnaes |>
   flatten()
 
 # Salvar no Excel
-write_xlsx(lista_municipios, "municipios_join_cnpj_arsenio_completos_teste2.xlsx")
+write_xlsx(lista_municipios, "municipios_join_cnpj_arsenio_completos_teste4.xlsx")
 
 
 
 
 
 
-
-
-  
