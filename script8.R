@@ -124,15 +124,14 @@ empresas <- read_excel("empresas_filtradas_com_cnpj_arsenio_todos_cnaes.xlsx",
 # ── REMOVER CNPJs BAIXADOS entre 2014 e 2023 ───────────────────────────
 cnpjs_baixados <- empresas |>
   filter(
-    ano >= 2014, ano <= 2023,
-    str_detect(str_to_upper(situacao_cadastral_desc), "^BAIXADA")
+    ano <= 2023,                                         # qualquer ano ≤ 2023
+    str_trim(str_to_upper(situacao_cadastral_desc)) == "BAIXADA"
   ) |>
   pull(cnpj_completo) |>
   unique()
 
 empresas <- empresas |>
   filter(!cnpj_completo %in% cnpjs_baixados)
-
 
 
 
