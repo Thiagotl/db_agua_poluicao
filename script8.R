@@ -46,8 +46,6 @@ df <- df %>%
 
 #############
 # TESTES 
-# ── Pacotes ────────────────────────────────────────────────────────────
-
 
 # ── 1) Carregar o arquivo e manter só as colunas de interesse ──────────
 colunas <- c("município", "uf", "código_ibge", "tipo_de_resultado",
@@ -218,3 +216,146 @@ lista_planilhas <- empresas |>
 
 write_xlsx(lista_planilhas,
            "municipios_join_cnpj_arsenio_RESUMO2.xlsx")
+
+
+
+
+##### Apenas os consistentes -----
+
+
+colunas <- c("município", "uf", "código_ibge", "tipo_de_resultado",
+             "parâmetro", "data_da_coleta", "consistencia",
+             "atendimento_ao_padrao")
+
+arsenio_raw <- read_excel("municipios_teste_arsenio.xlsx",
+                          .name_repair = "unique") |>
+  select(all_of(colunas)) |>
+  ## ⇣ NOVO: manter apenas amostras consistentes
+  filter(str_trim(str_to_upper(consistencia)) == "CONSISTENTE")
+
+arsenio_resumo <- arsenio_raw |>
+  mutate(
+    data_da_coleta   = dmy(data_da_coleta),
+    ano              = year(data_da_coleta),
+    semestre         = if_else(month(data_da_coleta) <= 6, 1, 2),
+    atendimento_ao_padrao = factor(
+      atendimento_ao_padrao,
+      levels = c("Acima do VMP", "Abaixo do VMP", "not applicable"))
+  ) |>
+  add_count(código_ibge, ano, semestre, name = "n_testes") |>
+  arrange(código_ibge, ano, semestre, atendimento_ao_padrao) |>
+  distinct(código_ibge, ano, semestre, .keep_all = TRUE) |>
+  relocate(n_testes, .after = semestre) |>
+  mutate(atendimento_ao_padrao = as.character(atendimento_ao_padrao))
+
+# ──────────────────────────────────────────────────────────────────────
+# 2) EMPRESAS – preparar base da Receita Federal
+# ──────────────────────────────────────────────────────────────────────
+empresas <- read_excel("empresas_filtradas_com_cnpj_arsenio_todos_cnaes.xlsx",
+                       .name_repair = "unique") |>
+  mutate(
+    código_ibge             = as.double(str_sub(codigo_ibge, end = -2)),
+    data_situacao_cadastral = ymd(data_situacao_cadastral),
+    ano_sit_cadastral       = year(data_situacao_cadastral),
+    data_inicio_atividade   = ymd(data_inicio_atividade),
+    ano_ini_atividade       = year(data_inicio_atividade)
+  ) |>
+  rename(ano = ano_sit_cadastral)
+
+# remover CNPJs baixados até 2023
+cnpjs_baixados <- empresas |>
+  filter(
+    ano <= 2023,
+    str_trim(str_to_upper(situacao_cadastral_desc)) == "BAIXADA"
+  ) |>
+  pull(cnpj_completo) |>
+  unique()
+
+empresas <- empresas |>
+  filter(!cnpj_completo %in% cnpjs_baixados)
+
+# ──────────────────────────────────────────────────────────────────────
+# 3) FUNÇÃO: expandir situação por ano e CNPJ
+# ──────────────────────────────────────────────────────────────────────
+expandir_situacao <- function(df_emp) {
+  anos_interesse <- 2014:2023
+  
+  df_emp |>
+    select(cnpj_completo, código_ibge, ano_ini_atividade,
+           ano, situacao_cadastral_desc) |>
+    filter(!is.na(ano)) |>
+    complete(
+      ano = anos_interesse,
+      nesting(cnpj_completo, código_ibge, ano_ini_atividade),
+      fill = list(situacao_cadastral_desc = NA)
+    ) |>
+    arrange(cnpj_completo, ano) |>
+    group_by(cnpj_completo) |>
+    mutate(
+      situacao_cadastral_desc =
+        zoo::na.locf(situacao_cadastral_desc, na.rm = FALSE),
+      situacao_cadastral_desc =
+        ifelse(ano < ano_ini_atividade, NA, situacao_cadastral_desc)
+    ) |>
+    mutate(
+      primeira_situacao_ano = min(ano[!is.na(situacao_cadastral_desc)],
+                                  na.rm = TRUE),
+      situacao_cadastral_desc = ifelse(
+        is.na(situacao_cadastral_desc) & ano >= ano_ini_atividade &
+          ano < primeira_situacao_ano,
+        "CARECE DE INFORMAÇÕES",
+        situacao_cadastral_desc
+      )
+    ) |>
+    select(-primeira_situacao_ano) |>
+    ungroup()
+}
+
+normalizar_nome <- function(x) {
+  x |>
+    str_to_lower() |>
+    str_replace_all("[[:space:]/]", "_") |>
+    iconv(from = "UTF-8", to = "ASCII//TRANSLIT") |>
+    str_replace_all("[^a-z0-9_]", "")
+}
+
+# ──────────────────────────────────────────────────────────────────────
+# 4) LOOP POR MUNICÍPIO – montar abas e gravar planilha
+# ──────────────────────────────────────────────────────────────────────
+lista_planilhas <- empresas |>
+  group_by(código_ibge) |>
+  group_split() |>
+  map(function(df_empresas) {
+    codigo <- unique(df_empresas$código_ibge)
+    nome   <- unique(df_empresas$municipio_nome)
+    aba    <- paste0("municipio_", codigo, "_", normalizar_nome(nome))
+    
+    # 4.1) dados de arsênio (já filtrados e resumidos) desse município
+    df_ars <- arsenio_resumo |>
+      filter(código_ibge == codigo)
+    
+    # 4.2) expandir situação das empresas (por ano)
+    df_expand <- expandir_situacao(df_empresas)
+    
+    # 4.3) pivotar empresas para formato “largo”
+    empresas_largo <- df_expand |>
+      pivot_wider(
+        id_cols    = c(ano, código_ibge),
+        names_from  = cnpj_completo,
+        values_from = situacao_cadastral_desc,
+        names_prefix = "cnpj_",
+        values_fill  = NA
+      )
+    
+    # 4.4) juntar com arsênio (junção por ano + código_ibge)
+    df_final <- left_join(df_ars, empresas_largo,
+                          by = c("código_ibge", "ano")) |>
+      select(-tipo_de_resultado, -data_da_coleta, -consistencia)
+    
+    setNames(list(df_final), aba)
+  }) |>
+  purrr::flatten()
+
+write_xlsx(lista_planilhas,
+           "municipios_join_cnpj_arsenio_RESUMO3.xlsx")
+
