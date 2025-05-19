@@ -3,7 +3,10 @@ library(readr)
 
 library(writexl)
 
-dados<- read_csv("total_sisagua_anos_2014_2022_download_14_set_2024.csv")
+dados1<- read_csv("total_sisagua_anos_2014_2022_download_14_set_2024.csv")
+
+dados<-read_csv("planilha0.csv")
+
 
 View(dados)
 
@@ -27,6 +30,6 @@ dados_arsenio <- dados_arsenio |>
 View(dados_arsenio)
 
 
-write_xlsx(dados_arsenio, "municipios_teste_arsenio.xlsx")
+write_xlsx(dados_arsenio[,1:31], "municipios_teste1_arsenio.xlsx")
 
 
