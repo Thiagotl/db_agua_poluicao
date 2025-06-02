@@ -20,6 +20,12 @@ dados_area_temporaria_winde<- dados_area_temporaria |>
   )
 
 
+
+
+write_xlsx(dados_area_temporaria_winde,
+           "area_cultura_temporaria.xlsx")
+
+
 # CULTARAS PERMANENTES -------------------
 
 dados_area_permanente <- dados |> 
@@ -35,3 +41,9 @@ dados_area_permanente_winde<- dados_area_permanente |>
     values_from = Valor,
     values_fill = 0
   )
+
+
+write_xlsx(dados_area_permanente_winde,
+           "area_cultura_permanente.xlsx")
+
+
