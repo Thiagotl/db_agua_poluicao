@@ -149,7 +149,7 @@ dim(table(dados_combinados$municipio)) # 2782
 
 #sum(dados_combinados$prop2 == 0, na.rm = T)
 
-#write.xlsx(dados_combinados, file = "dados_combinado.xlsx")
+write.xlsx(dados_combinados, file = "dados_combinado.xlsx")
 
 # uma alteracao para os dados combinados
 
