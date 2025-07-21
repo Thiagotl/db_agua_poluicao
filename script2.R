@@ -24,12 +24,12 @@ dados_sisagua_p7<-as.data.frame(dados_sisagua_p7)
 ##########################
 
 dados_sisagua_p7_agrupados<- dados_sisagua_p7 |> 
-  group_by(codigo_ibge,parâmetro,municipio,uf) |> 
+  group_by(codigo_ibge,parâmetro, grupo_de_parâmetros,municipio,uf) |> 
   summarise(across(where(is.numeric), sum, na.rm = TRUE), .groups = "drop")
 View(dados_sisagua_p7_agrupados)
 
 dados_sisagua_p7_agrupados <- dados_sisagua_p7_agrupados |>
-  select(municipio, parâmetro, uf, codigo_ibge, 
+  select(municipio, grupo_de_parâmetros ,parâmetro, uf, codigo_ibge, 
          `Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,
          `Total de inconsistentes`, 
          `Total de Consistentes não detectados`,
@@ -149,7 +149,7 @@ dim(table(dados_combinados$municipio)) # 2782
 
 #sum(dados_combinados$prop2 == 0, na.rm = T)
 
-write.xlsx(dados_combinados, file = "dados_combinado.xlsx")
+write.xlsx(dados_combinados, file = "dados_combinados_planilha10.xlsx")
 
 # uma alteracao para os dados combinados
 
