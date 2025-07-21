@@ -5,12 +5,10 @@ library(tidyverse)
 library(readxl)
 library(flextable)
 
-
 dados_combinado <- read_excel("dados_combinados_planilha10.xlsx")
 View(dados_combinado)
 
 attach(dados_combinado)
-
 
 x<-dados_combinado |> 
   group_by(municipio) |> 
@@ -24,7 +22,6 @@ round(prop.table(table(dados_combinado$grupo_de_parâmetros))*100,2)
 
 dados_combinado_arsenio<-dados_combinado |> 
   filter(parâmetro == "Arsênio")
-
 
 # dados<-dados_combinado |> 
 #   filter(Total_Detectados>=1)
@@ -60,9 +57,7 @@ doc <- read_docx() %>%
 
 print(doc, target = "contagem_parametros.docx")
 
-
 ##filtro para 3 ou mais susbtâncias----
-
 
 dados2<-dados_combinado |> 
   filter(`Total de Consistentes detectados Acima do VMP`>=3)
@@ -117,7 +112,6 @@ tabela_final3 <- tabela3 %>%
   theme_zebra() %>%  # Corrigido: theme_zebra() com "e", não theme_zebra()
   autofit()
 
-
 doc3 <- read_docx() %>%  
   body_add_flextable(tabela_final3)
 
@@ -130,7 +124,6 @@ casos_graves<-dados_combinado |>
   filter(Total_Detectados>=10,
          `Total de Consistentes detectados Acima do VMP`>=1) |> 
   group_by(municipio, parâmetro)
-
 
 #planilha 1 
 
@@ -168,7 +161,6 @@ library(writexl)
 
 write_xlsx(lista_municipios, "municipios_join_cnpj_arsenio_completos_teste4.xlsx")
 
-
 library(openxlsx)
 
 # Criar uma lista com os nomes dos seus objetos e os próprios objetos
@@ -183,9 +175,6 @@ write.xlsx(
   lista_objetos,
   file = "planilhas_01_06_casos_graves.xlsx",
   asTable = TRUE)  # Opcional: TRUE se quiser formatar como tabela Excel
-
-
-
 # planilha6_pivotresult <- read_excel("planilha6_pivotresult_sisagua_9_nov.xlsx")
 # 
 # planilha6_pivotresult<-planilha6_pivotresult |> 
@@ -207,8 +196,6 @@ write.xlsx(
 #   theme_zebra()  |>   # Corrigido: theme_zebra() com "e", não theme_zebra()
 #   autofit()
 
-
-
 #Tabelas solicitadas --------
 
 ### ARSENIO ----
@@ -221,11 +208,10 @@ planilha_arsenio<-planilha_arsenio1 |>
          deteccao=ifelse(`Total de Consistentes detectados Acima do VMP` >= 1, 1, 0)) |>
   filter((`Total de inconsistentes`==`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`) == 0)
 
-
 chisq.test(table(num_empresa=planilha_arsenio$num_empresa, deteccao=planilha_arsenio$deteccao), correct = F)
 
 tabela<-table(num_empresa=planilha_arsenio$num_empresa, deteccao=planilha_arsenio$deteccao)
-prop.table(tabela,1)*100
+prop.table(tabela,1) * 100
 
 
 # planilha_arsenio_teste<-planilha_arsenio |> 
@@ -236,9 +222,6 @@ prop.table(tabela,1)*100
 # 
 # table(deteccao,num_empresa)
 # table(deteccao)
-
-
-
 # NUMERO DE MUNICIPIOS SOMENTE TESTES INCONSISTENTES (NUMERO DE LINHAS)
 planilha_arsenio_teste3<-planilha_arsenio1 |> 
   filter((`Total de inconsistentes`==`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`) != 0) |> 
@@ -269,7 +252,7 @@ table(deteccao2)
 funcao <- function(df){
   resultado1<-df |> 
     filter((`Total de inconsistentes`==`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`) == 0) |> 
-    filter(`Total de Consistentes detectados Acima do VMP`>1) 
+    filter(`Total de Consistentes detectados Acima do VMP`> 0) 
   
   resultado2 <- resultado1 |> 
     filter(`total_cnaes` > 0) 
@@ -320,23 +303,18 @@ teste_funcao$tabela_resultado3
 # PARA ACHAR O VALOR 1259 DEVE-SE SOMAR OS VALORES DA PRIMEIRA COLUNA DA TABELA RESULTADO 3
 # PARA ACHAR O VALOR 746 DEVE-SE SUBTRAIR OS VALORES DA SEGUNDA COLUNA DA TABELA RESULTADO 3
 
+# PARA ENCONTAR O VALOR 61 USE O SEGUINTE SCRIPT
 
+# resultado1<-df |> 
+#   filter((`Total de inconsistentes`==`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`) == 0) |> 
+#   filter(`Total de Consistentes detectados Acima do VMP`> 0) 
+# 
+# resultado2 <- resultado1 |> 
+#   filter(`total_cnaes` > 0) 
 
 ### CHUMBO----
 
-
 planilha_chumbo <- read_excel("planilhas_parametros/planilha_chumbo.xlsx")
-
-planilha_chumbo1<-planilha_chumbo |>
-  mutate(num_empresa=ifelse(total_cnaes>0,1,0),
-         deteccao=ifelse(`Total de Consistentes detectados Acima do VMP`>=1,1,0)) |>
-  filter((`Total de inconsistentes`==`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`)== 0)
-
-
-
-tabela<-table(num_empresa=planilha_chumbo1$num_empresa, deteccao=planilha_chumbo1$deteccao)
-prop.table(tabela,1)*100
-
 
 
 
