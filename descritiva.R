@@ -4,6 +4,7 @@
 library(tidyverse)
 library(readxl)
 library(flextable)
+library(kableExtra)
 
 dados_combinado <- read_excel("dados_combinados_planilha10.xlsx")
 View(dados_combinado)
@@ -196,13 +197,16 @@ write.xlsx(
 #   theme_zebra()  |>   # Corrigido: theme_zebra() com "e", não theme_zebra()
 #   autofit()
 
-#Tabelas solicitadas --------
+# TABELAS SOLICITADAS --------
+
+# NESTA PARTE ESTÃO AS TABELAS SOLICITADAS PARA O RELATÓRIO FINAL
+
 
 ### ARSENIO ----
 planilha_arsenio1 <- read_excel("planilhas_parametros/planilha_arsenio.xlsx")
 
 
-# Aqui é filtrado dos consistentes 
+# Aqui é filtrado dos consistentes - Tabela 2
 planilha_arsenio<-planilha_arsenio1 |>
   mutate(num_empresa=ifelse(total_cnaes > 0, 1, 0),
          deteccao=ifelse(`Total de Consistentes detectados Acima do VMP` >= 1, 1, 0)) |>
@@ -214,14 +218,17 @@ tabela<-table(num_empresa=planilha_arsenio$num_empresa, deteccao=planilha_arseni
 prop.table(tabela,1) * 100
 
 
-# planilha_arsenio_teste<-planilha_arsenio |> 
+
+####### sem utlidade ####
+# planilha_arsenio_teste<-planilha_arsenio |>
 #   mutate(num_empresa=ifelse(total_cnaes>0,1,0),
 #          deteccao=ifelse(`Total de inconsistentes`==`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`,1,0))
 # deteccao=planilha_arsenio_teste$deteccao
 # num_empresa=planilha_arsenio_teste$num_empresa
-# 
 # table(deteccao,num_empresa)
 # table(deteccao)
+
+
 # NUMERO DE MUNICIPIOS SOMENTE TESTES INCONSISTENTES (NUMERO DE LINHAS)
 planilha_arsenio_teste3<-planilha_arsenio1 |> 
   filter((`Total de inconsistentes`==`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`) != 0) |> 
@@ -241,47 +248,169 @@ deteccao2<-planilha_arsenio_teste2$deteccao
 
 # NÚMERO DE MUNICIPIOS COM UM OU MAIS CNAES RELACIONADOS E NÃO TEM DETECÇÃO 
 # NÚMERO DE MUNICIPIOS COM UM OU MAIS CNAES RELACIONADOS E TEM DETECÇÃO ABAIXO DO VMP MAS NÃO TEM ACIMA DO VMP
-table(deteccao2,num_empresa2)
+a <- table(deteccao2,num_empresa2)
+a[1,2]
 
 # NÚMERO DE MUNICIPIOS SEM DETECÇÃO // NUMERO DE MUNICIPIOS COM UM OU MAIS CNAES RELACIONADOS SEM DETECÇÃO
-table(deteccao2)
+table(deteccao2)[2]
 
 #tabela_qui<-table(planilha_arsenio$deteccao,planilha_arsenio$num_empresa)
 #round(prop.table(table(planilha_arsenio$deteccao,planilha_arsenio$num_empresa))*100,2)
 
-funcao <- function(df){
-  resultado1<-df |> 
-    filter((`Total de inconsistentes`==`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`) == 0) |> 
-    filter(`Total de Consistentes detectados Acima do VMP`> 0) 
+
+# FUNCAO ULTRA MEGA POWER QUE RESOLVE TUDO E MAIS UM POUCO 
+
+funcao_descritiva <- function(df){
   
-  resultado2 <- resultado1 |> 
-    filter(`total_cnaes` > 0) 
-  
-  resultado3 <- df |> 
-    filter((`Total de inconsistentes`==`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`) == 0) |> 
-    filter(`Total de Consistentes detectados Acima do VMP` == 0) |> 
+  # RESULTADOS TABELA 2
+  tabela2 <- df |>
     mutate(num_empresa=ifelse(total_cnaes > 0, 1, 0),
-           deteccao=`Total de Consistentes detectados Abaixo do VMP` > 0) 
-  tabela_resultado3<-table(resultado3$deteccao,resultado3$num_empresa)
+           deteccao=ifelse(`Total de Consistentes detectados Acima do VMP` >= 1, 1, 0)) |>
+    filter((`Total de inconsistentes`==`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`) == 0) 
     
-  list(
-    resultado1 = resultado1,
-    resultado2 = resultado2,
-    resultado3 = resultado3,
-    tabela_resultado3 = tabela_resultado3
-  )
-  
+    tabela2 <- table(num_empresa=tabela2$num_empresa, deteccao=tabela2$deteccao)
+    rownames(tabela2) <- c("Não possui CNAE Relacionado","Possui CNAE Relacionado")
+    colnames(tabela2) <- c("Não tem detecção", "Tem detecção Acima do VMP")
+    
+    tabela_html2 <- tabela2 |>
+      as.data.frame.matrix() |>
+      kbl(align = "c", caption = "Relação entre CNAE e Detecção") |>
+      kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE,
+        position = "center"
+      ) |>
+      add_header_above(c(" " = 1, "Status de Detecção" = 2)) |>
+      row_spec(0, bold = TRUE, background = "#f8f9fa")
+
+    resultado1 <-tabela2[1,2] + tabela2[2,2]
+    resultado2 <- tabela2[2,2]
+    # RESULTADOS TABELA 1
+    
+    planilha1 <- df |> 
+      filter((`Total de inconsistentes`==`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`) != 0) |> 
+      filter(`Total de Consistentes detectados Acima do VMP` == 0)
+    res_p1 <- dim(planilha1)[1]
+
+    planilha2 <- planilha1 |> 
+      filter(`total_cnaes` > 0) 
+    res_p2 <- dim(planilha2)[1]
+    
+    planilha3<-df |> 
+      filter((`Total de inconsistentes`==`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`) == 0) |> 
+      filter(`Total de Consistentes detectados Acima do VMP` == 0) |> 
+      mutate(num_empresa=ifelse(total_cnaes > 0, 1, 0),
+             deteccao=`Total de Consistentes detectados Abaixo do VMP` > 0)
+    
+    tabela_p3 <- table(planilha3$deteccao, planilha3$num_empresa)
+    res_tab_p3 <- tabela_p3[2,2]
+    res2_tab_p3 <- tabela_p3[1,2]
+    
+    tabela2_p3 <-table(planilha3$deteccao)
+    res_tab2_p3 <- tabela2_p3[1]
+    res2_tab2_p3 <- tabela2_p3[2]
+    
+    df_tabela <- data.frame(
+      ELEMENTO = c(
+        "Tem detecção Acima do VMP",
+        "Detecção abaixo VMP sem acima VMP",
+        "Não tem detecções",
+        "Somente testes inconsistentes"
+      ),
+      "N mun" = c(
+        resultado1,
+        res2_tab2_p3,
+        res_tab2_p3,
+        res_p1
+      ),
+      "N mun com 1/+ CNAES rela" = c(
+        resultado2,
+        res_tab_p3,
+        res2_tab_p3,
+        res_p2
+      ),
+      stringsAsFactors = FALSE,
+      check.names = FALSE  
+    )
+    
+    tabela_html1 <- df_tabela 
+    
+    tabela_html1 <- df_tabela |>
+      kbl(
+        align = "c",
+        col.names = c("ELEMENTO", "N mun", "N mun com 1/+ CNAES rela"),
+        caption = "Relação entre CNAE e Detecção"
+      ) |>
+      kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed"),
+        full_width = FALSE,
+        position = "center"
+      ) |>
+      add_header_above(c(" " = 1, "Status de Detecção" = 2)) |>
+      row_spec(0, bold = TRUE, background = "#f8f9fa")
+    
+    return(list(tabela_html1 = tabela_html1, tabela_html2 = tabela_html2))
+    
 }
 
-teste_funcao<-funcao(planilha_arsenio1)
+teste_funcao<-funcao_descritiva(planilha_arsenio1)
+teste_funcao$tabela_html1
+teste_funcao$tabela_html2
 
-teste_funcao$resultado1
+### CHUMBO----
 
-teste_funcao$resultado2
+planilha_chumbo <- read_excel("planilhas_parametros/planilha_chumbo.xlsx")
 
-teste_funcao$resultado3
+resultados_chumbo <- funcao_descritiva(planilha_chumbo)
+resultados_chumbo$tabela_html1
+resultados_chumbo$tabela_html2
 
-teste_funcao$tabela_resultado3
+
+
+planilha_chumbo<-planilha_chumbo |>
+  mutate(num_empresa=ifelse(total_cnaes > 0, 1, 0),
+         deteccao=ifelse(`Total de Consistentes detectados Acima do VMP` >= 1, 1, 0)) |>
+  filter((`Total de inconsistentes`==`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`) == 0)
+
+
+tabela<-table(num_empresa=planilha_chumbo$num_empresa, deteccao=planilha_chumbo$deteccao)
+
+# # Detecção acima do VMP e numero de muncípios
+# resultado1<-df |> 
+#   filter((`Total de inconsistentes`==`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`) == 0) |> 
+#   filter(`Total de Consistentes detectados Acima do VMP` > 0) 
+# 
+# # Detecção acima do VMP e num de municipios com um ou mais CNAES relacionados
+# resultado2 <- resultado1 |> 
+#   filter(`total_cnaes` > 0) 
+# 
+# # # # # # # #
+# 
+# resultado1_1<-df |> 
+#   filter((`Total de inconsistentes`==`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`) != 1) |> 
+#   filter(`Total de Consistentes detectados Acima do VMP` == 0) 
+# 
+# # MUNICIPIOS QUE NÃO TEM DETECÇÃO E NÃO POSSUEM CNAE RELACIONADO
+# resultado2_2 <- resultado1_1 |> 
+#   filter(`total_cnaes` > 0) 
+#   
+# 
+# # # # # # 
+# resultado1_3<-df |>
+#   filter((`Total de inconsistentes`==`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`) != 1) |>
+#   filter(`Total de Consistentes detectados Acima do VMP`== 1)
+# 
+# # Não possui CNAE relacionado e tem deteção acima do VMP
+# resultado2_3 <- resultado1_3 |>
+#   filter(`total_cnaes` > 0)
+# 
+# resultado3 <- df |> 
+#   filter((`Total de inconsistentes`==`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`) == 0) |> 
+#   filter(`Total de Consistentes detectados Acima do VMP` == 0) |> 
+#   mutate(num_empresa=ifelse(total_cnaes > 0, 1, 0),
+#          deteccao=`Total de Consistentes detectados Abaixo do VMP` > 0) 
+# tabela_resultado3 <- table(resultado3$deteccao,resultado3$num_empresa)
+# tabela_resultado3_1 <- table(resultado3$deteccao)
 
 
 # MUNICIPIOS QUE NÃO TEM DETECÇÃO E NÃO POSSUEM CNAE RELACIONADO - USAR O SCRIPT ABAIXO (746)
@@ -310,13 +439,6 @@ teste_funcao$tabela_resultado3
 #   filter(`Total de Consistentes detectados Acima do VMP`> 0) 
 # 
 # resultado2 <- resultado1 |> 
-#   filter(`total_cnaes` > 0) 
-
-### CHUMBO----
-
-planilha_chumbo <- read_excel("planilhas_parametros/planilha_chumbo.xlsx")
-
-
-
+#   filter(`total_cnaes` > 0)
 
 
