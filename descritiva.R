@@ -24,20 +24,34 @@ round(prop.table(table(dados_combinado$grupo_de_parâmetros))*100,2)
 dados_combinado_arsenio<-dados_combinado |> 
   filter(parâmetro == "Arsênio")
 
+# para verificar quais municipios fizeram um único teste pra a subtância durante todos os anos.
+apenas_1teste <- dados_combinado |> 
+  filter(`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`==1) |> 
+  group_by(parâmetro)
+
+table(as.factor(apenas_1teste$municipio)) |> 
+  length()
+
+#prop.table(table(as.factor(apenas_1teste$parâmetro))) * 100
+  
+
 # dados<-dados_combinado |> 
 #   filter(Total_Detectados>=1)
 
 dados<-dados_combinado |> 
-  filter(`Total de Consistentes detectados Acima do VMP`>=1)
+  filter(`Total de Consistentes detectados Acima do VMP`>=1) |> 
+  group_by(municipio)
 
 View(dados)
 
-dados<-dados |> 
+
+# Ao todo são 987 municípios 
+dados <- dados |> 
   group_by(municipio, parâmetro) |> 
   summarise(quant_total = n(), .groups = 'drop') |> 
   arrange(municipio, parâmetro)
 
-tabela<-as.data.frame(table(dados$parâmetro)) |> 
+tabela <- as.data.frame(table(dados$parâmetro)) |> 
   rename(Parâmetro = Var1, Quantidade = Freq) |> 
   arrange(desc(Quantidade))
 
@@ -356,6 +370,7 @@ funcao_descritiva <- function(df){
 teste_funcao<-funcao_descritiva(planilha_arsenio1)
 teste_funcao$tabela_html1
 teste_funcao$tabela_html2
+library(tidyverse)
 
 ### CHUMBO----
 
@@ -374,6 +389,26 @@ planilha_chumbo<-planilha_chumbo |>
 
 
 tabela<-table(num_empresa=planilha_chumbo$num_empresa, deteccao=planilha_chumbo$deteccao)
+
+
+planilha_nitrato <- read_excel("planilhas_parametros/planilha_nitrato_como_N.xlsx")
+resultados_nitrato <- funcao_descritiva(planilha_nitrato)
+
+resultados_nitrato$tabela_html1
+resultados_nitrato$tabela_html2
+
+
+
+planilha_nitrato<-planilha_nitrato |>
+  mutate(num_empresa=ifelse(total_cnaes > 0, 1, 0),
+         deteccao=ifelse(`Total de Consistentes detectados Acima do VMP` >= 1, 1, 0)) |>
+  filter((`Total de inconsistentes`==`Total de testes substâncias em geral para cada linha - incluindo MENOR_LQ`) == 0)
+
+
+tabela<-table(num_empresa=planilha_nitrato$num_empresa, deteccao=planilha_nitrato$deteccao)
+
+
+
 
 # # Detecção acima do VMP e numero de muncípios
 # resultado1<-df |> 
